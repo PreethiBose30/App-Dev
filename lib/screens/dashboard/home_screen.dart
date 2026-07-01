@@ -20,9 +20,9 @@ class HomeScreen extends StatelessWidget {
         title: const Text(
           "Digital Inventory",
           style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
             fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
         ),
         actions: [
@@ -33,11 +33,11 @@ class HomeScreen extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
             child: CircleAvatar(
               backgroundColor: AppColors.primary,
-              child: Icon(
+              child: const Icon(
                 Icons.person_outline,
                 color: Colors.white,
               ),
@@ -49,133 +49,181 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
-            horizontal: w * .05,
-            vertical: h * .02,
+            horizontal: w * 0.05,
+            vertical: h * 0.02,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// Greeting Card
+              /// ✅ WELCOME CARD
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(w * .06),
+                padding: EdgeInsets.all(w * 0.06),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withOpacity(.35),
+                      AppColors.primary.withOpacity(0.35),
                       AppColors.surface,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(.25),
+                    color: AppColors.primary.withOpacity(0.25),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(.15),
+                      color: AppColors.primary.withOpacity(0.15),
                       blurRadius: 25,
                       spreadRadius: 2,
                     ),
                   ],
                 ),
+
                 child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
 
                     Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
                         Text(
                           "Good Evening",
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: w * .04,
+                            fontSize: w * 0.04,
                           ),
                         ),
-
-                        SizedBox(height: h * .01),
-
+                        SizedBox(height: h * 0.01),
                         Text(
                           "Preethi",
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            fontSize: w * 0.08,
                             fontWeight: FontWeight.bold,
-                            fontSize: w * .08,
-                          ),
-                        ),
-
-                        SizedBox(height: h * .01),
-
-                        const Text(
-                          "Let's organize your documents",
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
 
                     Container(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.primary
-                            .withOpacity(.15),
+                        color: AppColors.primary.withOpacity(.15),
                       ),
                       child: const Icon(
                         Icons.folder_copy_outlined,
-                        size: 38,
                         color: AppColors.primary,
+                        size: 34,
                       ),
                     ),
-
                   ],
                 ),
               ),
 
-              SizedBox(height: h * .035),
+              SizedBox(height: h * 0.04),
 
-              /// Search Bar
+              /// ✅ STORAGE SECTION (moved OUTSIDE container)
+              const Text(
+                "Storage",
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              SizedBox(height: h * 0.02),
+
               Container(
-                height: h * .07,
+                width: double.infinity,
+                padding: EdgeInsets.all(w * 0.05),
                 decoration: BoxDecoration(
-                  color:
-                      AppColors.surface.withOpacity(.8),
-                  borderRadius:
-                      BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.white10,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary
-                          .withOpacity(.08),
-                      blurRadius: 20,
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Storage Used",
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "68%",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: const LinearProgressIndicator(
+                        value: 0.68,
+                        minHeight: 10,
+                        backgroundColor: Colors.white12,
+                        valueColor: AlwaysStoppedAnimation(
+                          AppColors.primary,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "6.8 GB Used",
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          "10 GB Total",
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+
+              SizedBox(height: h * 0.035),
+
+              /// ✅ SEARCH BAR
+              Container(
+                height: h * 0.07,
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withOpacity(.75),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white10),
+                ),
                 child: const TextField(
-                  textAlignVertical:
-                      TextAlignVertical.center,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Search documents...",
-                    contentPadding:
-                        EdgeInsets.symmetric(
-                      vertical: 18,
-                    ),
-                    hintStyle: TextStyle(
-                      color: AppColors.textSecondary,
-                    ),
+                    contentPadding: EdgeInsets.symmetric(vertical: 18),
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
                     prefixIcon: Icon(
                       Icons.search,
                       color: AppColors.textSecondary,
@@ -188,8 +236,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * .04),
+              SizedBox(height: h * 0.04),
 
+              /// ✅ QUICK ACTIONS
               const Text(
                 "Quick Actions",
                 style: TextStyle(
@@ -199,15 +248,13 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * .02),
+              SizedBox(height: h * 0.02),
 
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _quickActionCard(
-                    icon:
-                        Icons.document_scanner_outlined,
+                    icon: Icons.document_scanner_outlined,
                     title: "Scan",
                     width: w,
                   ),
@@ -217,179 +264,15 @@ class HomeScreen extends StatelessWidget {
                     width: w,
                   ),
                   _quickActionCard(
-                    icon:
-                        Icons.upload_file_outlined,
+                    icon: Icons.upload_file_outlined,
                     title: "Import",
                     width: w,
                   ),
                 ],
               ),
-
-              SizedBox(height: h * .04),
-
-                            /// Storage
-              const Text(
-                "Storage",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              SizedBox(height: h * .02),
-
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(w * .05),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: Colors.white10,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-
-                    const Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Storage Used",
-                          style: TextStyle(
-                            color:
-                                AppColors.textPrimary,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          "68%",
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(20),
-                      child:
-                          const LinearProgressIndicator(
-                        value: .68,
-                        minHeight: 10,
-                        backgroundColor:
-                            Colors.white12,
-                        valueColor:
-                            AlwaysStoppedAnimation(
-                          AppColors.primary,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    const Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "6.8 GB Used",
-                          style: TextStyle(
-                            color:
-                                AppColors.textSecondary,
-                          ),
-                        ),
-                        Text(
-                          "10 GB Total",
-                          style: TextStyle(
-                            color:
-                                AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: h * .04),
-
-              /// Recent Documents
-              const Text(
-                "Recent Documents",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              SizedBox(height: h * .02),
-
-              _documentTile(
-                icon: Icons.picture_as_pdf,
-                title: "Passport.pdf",
-                subtitle: "2 MB • Today",
-              ),
-
-              SizedBox(height: h * .015),
-
-              _documentTile(
-                icon: Icons.description,
-                title: "Resume.docx",
-                subtitle: "850 KB • Yesterday",
-              ),
-
-              SizedBox(height: h * .015),
-
-              _documentTile(
-                icon: Icons.image,
-                title: "Invoice.png",
-                subtitle: "1.4 MB • 2 days ago",
-              ),
-
-              SizedBox(height: h * .05),
-
-                          ],
+            ],
           ),
         ),
-      ),
-
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
-        onTap: (index) {},
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.folder_copy_outlined),
-            label: "Files",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner_rounded),
-            label: "Scan",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Profile",
-          ),
-        ],
       ),
     );
   }
@@ -400,8 +283,8 @@ class HomeScreen extends StatelessWidget {
     required double width,
   }) {
     return Container(
-      width: width * .27,
-      height: width * .27,
+      width: width * 0.27,
+      height: width * 0.27,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
@@ -415,8 +298,8 @@ class HomeScreen extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: AppColors.primary,
               size: 34,
+              color: AppColors.primary,
             ),
             const SizedBox(height: 10),
             Text(
@@ -428,64 +311,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _documentTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.arrow_forward_ios_rounded,
-            color: AppColors.textSecondary,
-            size: 16,
-          ),
-        ],
       ),
     );
   }
