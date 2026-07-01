@@ -125,6 +125,91 @@ class HomeScreen extends StatelessWidget {
               
                   ],
                 ),
+
+                SizedBox(height: h * 0.04),
+                
+                const Text(
+                  "Storage",
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                
+                SizedBox(height: h * 0.02),
+                
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(w * 0.05),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: Colors.white10,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Storage Used",
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            "68%",
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                
+                      SizedBox(height: 15),
+                
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: const LinearProgressIndicator(
+                          value: 0.68,
+                          minHeight: 10,
+                          backgroundColor: Colors.white12,
+                          valueColor: AlwaysStoppedAnimation(
+                            AppColors.primary,
+                          ),
+                        ),
+                      ),
+                
+                      SizedBox(height: 18),
+                
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "6.8 GB Used",
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            "10 GB Total",
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                
+                    ],
+                  ),
+                ),
               ),
               
               SizedBox(height: h * 0.035),
