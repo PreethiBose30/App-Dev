@@ -90,6 +90,7 @@ class HomeScreen extends StatelessWidget {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Search documents...",
+                    contentPadding: EdgeInsets.symmetric(vertical: 18),
                     hintStyle: TextStyle(
                       color: AppColors.textSecondary,
                     ),
