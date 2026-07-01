@@ -13,6 +13,21 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
 
+      /// 📱 BOTTOM NAVIGATION
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.description), label: "Docs"),
+          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: "Add"),
+          BottomNavigationBarItem(icon: Icon(Icons.category), label: "Categories"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+      ),
+
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -28,19 +43,14 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: AppColors.textPrimary,
-            ),
+            icon: const Icon(Icons.notifications_none_rounded),
+            color: AppColors.textPrimary,
           ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: CircleAvatar(
               backgroundColor: AppColors.primary,
-              child: const Icon(
-                Icons.person_outline,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.person_outline, color: Colors.white),
             ),
           ),
         ],
@@ -56,7 +66,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// ✅ WELCOME CARD
+              /// 👋 WELCOME CARD
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(w * 0.06),
@@ -73,19 +83,10 @@ class HomeScreen extends StatelessWidget {
                   border: Border.all(
                     color: AppColors.primary.withOpacity(0.25),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.15),
-                      blurRadius: 25,
-                      spreadRadius: 2,
-                    ),
-                  ],
                 ),
-
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -107,7 +108,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     Container(
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
@@ -119,14 +119,14 @@ class HomeScreen extends StatelessWidget {
                         color: AppColors.primary,
                         size: 34,
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
 
               SizedBox(height: h * 0.04),
 
-              /// ✅ STORAGE SECTION (moved OUTSIDE container)
+              /// 📦 STORAGE CARD
               const Text(
                 "Storage",
                 style: TextStyle(
@@ -153,20 +153,14 @@ class HomeScreen extends StatelessWidget {
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Storage Used",
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          "68%",
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text("Storage Used",
+                            style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold)),
+                        Text("68%",
+                            style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold)),
                       ],
                     ),
 
@@ -178,9 +172,8 @@ class HomeScreen extends StatelessWidget {
                         value: 0.68,
                         minHeight: 10,
                         backgroundColor: Colors.white12,
-                        valueColor: AlwaysStoppedAnimation(
-                          AppColors.primary,
-                        ),
+                        valueColor:
+                            AlwaysStoppedAnimation(AppColors.primary),
                       ),
                     ),
 
@@ -189,27 +182,21 @@ class HomeScreen extends StatelessWidget {
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "6.8 GB Used",
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        Text(
-                          "10 GB Total",
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                        Text("6.8 GB Used",
+                            style: TextStyle(
+                                color: AppColors.textSecondary)),
+                        Text("10 GB Total",
+                            style: TextStyle(
+                                color: AppColors.textSecondary)),
                       ],
                     ),
                   ],
                 ),
               ),
 
-              SizedBox(height: h * 0.035),
+              SizedBox(height: h * 0.04),
 
-              /// ✅ SEARCH BAR
+              /// 🔍 SEARCH BAR
               Container(
                 height: h * 0.07,
                 decoration: BoxDecoration(
@@ -222,25 +209,19 @@ class HomeScreen extends StatelessWidget {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Search documents...",
-                    contentPadding: EdgeInsets.symmetric(vertical: 18),
-                    hintStyle: TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: AppColors.textSecondary,
-                    ),
-                    suffixIcon: Icon(
-                      Icons.mic_none_rounded,
-                      color: AppColors.primary,
-                    ),
+                    prefixIcon: Icon(Icons.search,
+                        color: AppColors.textSecondary),
+                    suffixIcon: Icon(Icons.mic_none_rounded,
+                        color: AppColors.primary),
                   ),
                 ),
               ),
 
               SizedBox(height: h * 0.04),
 
-              /// ✅ QUICK ACTIONS
+              /// 📄 RECENT DOCUMENTS
               const Text(
-                "Quick Actions",
+                "Recent Documents",
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 22,
@@ -248,28 +229,42 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * 0.02),
+              const SizedBox(height: 16),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              _recentDocCard("Invoice_2026.pdf", "PDF", "2h ago"),
+              _recentDocCard("Project Notes", "Doc", "Yesterday"),
+              _recentDocCard("ID Proof Scan", "Image", "3 days ago"),
+
+              SizedBox(height: h * 0.03),
+
+              /// 📂 CATEGORIES
+              const Text(
+                "Categories",
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.2,
                 children: [
-                  _quickActionCard(
-                    icon: Icons.document_scanner_outlined,
-                    title: "Scan",
-                    width: w,
-                  ),
-                  _quickActionCard(
-                    icon: Icons.add_box_outlined,
-                    title: "Add",
-                    width: w,
-                  ),
-                  _quickActionCard(
-                    icon: Icons.upload_file_outlined,
-                    title: "Import",
-                    width: w,
-                  ),
+                  _categoryCard(Icons.picture_as_pdf, "PDFs", "12"),
+                  _categoryCard(Icons.image_outlined, "Images", "8"),
+                  _categoryCard(Icons.scanner_outlined, "Scans", "5"),
+                  _categoryCard(Icons.folder_outlined, "Folders", "3"),
                 ],
               ),
+
+              SizedBox(height: h * 0.04),
             ],
           ),
         ),
@@ -277,40 +272,76 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _quickActionCard({
-    required IconData icon,
-    required String title,
-    required double width,
-  }) {
+  /// 📄 Recent Document Card
+  static Widget _recentDocCard(String title, String type, String time) {
     return Container(
-      width: width * 0.27,
-      height: width * 0.27,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white10),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {},
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 34,
-              color: AppColors.primary,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 10),
-            Text(
-              title,
+            child: const Icon(Icons.description_outlined,
+                color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text("$type • $time",
+                    style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12)),
+              ],
+            ),
+          ),
+          const Icon(Icons.more_vert,
+              color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+
+  /// 📂 Category Card
+  static Widget _categoryCard(
+      IconData icon, String title, String count) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: AppColors.primary, size: 28),
+          const SizedBox(height: 10),
+          Text(title,
               style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text("$count items",
+              style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12)),
+        ],
       ),
     );
   }
