@@ -6,66 +6,105 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final w = size.width;
+    final h = size.height;
+
     return Scaffold(
       backgroundColor: AppColors.background,
 
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        centerTitle: false,
+        automaticallyImplyLeading: false,
         title: const Text(
           "Digital Inventory",
           style: TextStyle(
-            color: AppColors.textPrimary,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
         ),
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: AppColors.textPrimary,
+            ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.person_outline),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              backgroundColor: AppColors.primary,
+              child: const Icon(
+                Icons.person_outline,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
 
-      body: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(20),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: w * 0.05,
+            vertical: h * 0.02,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Hello, Preethi 👋",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-
-              SizedBox(height: 8),
 
               Text(
-                "Welcome back!",
+                "Good Evening",
                 style: TextStyle(
-                  fontSize: 16,
                   color: AppColors.textSecondary,
+                  fontSize: w * 0.045,
                 ),
               ),
 
-              SizedBox(height: 30),
+              SizedBox(height: h * 0.005),
 
               Text(
-                "Dashboard UI Coming Soon...",
+                "Preethi",
                 style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 18,
+                  color: AppColors.textPrimary,
+                  fontSize: w * 0.085,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+
+              SizedBox(height: h * 0.035),
+
+              Container(
+                height: h * 0.07,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const TextField(
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "Search documents...",
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: AppColors.textSecondary,
+                    ),
+                    suffixIcon: Icon(
+                      Icons.mic_none_rounded,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+
             ],
           ),
         ),
