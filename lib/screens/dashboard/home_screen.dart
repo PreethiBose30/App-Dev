@@ -292,7 +292,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 📄 RECENT CARD (POLISHED)
   Widget _recentDocCard(String title, String type, String time) {
-    return Container(
+  return InkWell(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ProductDetailScreen(),
+        ),
+      );
+    },
+    child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -307,32 +316,46 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppColors.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.description_outlined,
-                color: AppColors.primary),
+            child: const Icon(
+              Icons.description_outlined,
+              color: AppColors.primary,
+            ),
           ),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text("$type • $time",
-                    style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12)),
+                Text(
+                  "$type • $time",
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
-          const Icon(Icons.more_horiz,
-              color: AppColors.textSecondary),
+
+          const Icon(
+            Icons.more_horiz,
+            color: AppColors.textSecondary,
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// 📂 CATEGORY CARD (MODERN)
   Widget _categoryCard(IconData icon, String title, String count) {
