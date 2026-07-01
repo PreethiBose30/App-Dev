@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import 'package:digital_inventory/screens/product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
