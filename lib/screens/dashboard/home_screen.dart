@@ -103,10 +103,83 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                
               ),
 
+              SizedBox(height: h * 0.04),
+
+              const Text(
+                "Quick Actions",
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              SizedBox(height: h * 0.02),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _quickActionCard(
+                    icon: Icons.document_scanner_outlined,
+                    title: "Scan",
+                    width: w,
+                  ),
+                  _quickActionCard(
+                    icon: Icons.add_box_outlined,
+                    title: "Add",
+                    width: w,
+                  ),
+                  _quickActionCard(
+                    icon: Icons.upload_file_outlined,
+                    title: "Import",
+                    width: w,
+                  ),
+                ],
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+    Widget _quickActionCard({
+    required IconData icon,
+    required String title,
+    required double width,
+  }) {
+    return Container(
+      width: width * 0.27,
+      height: width * 0.27,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white10,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {},
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 34,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
