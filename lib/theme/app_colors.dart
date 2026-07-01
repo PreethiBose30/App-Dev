@@ -6,7 +6,7 @@ class AppColors {
   static const Color surface = Color(0xFF1E1E1E);
 
   // Accent Color (can be changed later)
-  static const Color primary = Colors.deepPurple;
+  static const Color primary = Color(0xFF7C4DFF);
 
   // Text Colors
   static const Color textPrimary = Colors.white;
