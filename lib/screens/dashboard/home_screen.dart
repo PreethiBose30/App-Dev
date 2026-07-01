@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -13,10 +20,20 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      /// 📱 PREMIUM BOTTOM NAVIGATION
+      /// 🚀 FLOATING ACTION BUTTON (SCAN / ADD)
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
+        onPressed: () {},
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.centerDocked,
+
+      /// 📱 PREMIUM BOTTOM NAV
       bottomNavigationBar: Container(
         margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(30),
@@ -29,6 +46,12 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         child: BottomNavigationBar(
+          currentIndex: currentIndex,
+          onTap: (index) {
+            setState(() {
+              currentIndex = index;
+            });
+          },
           backgroundColor: Colors.transparent,
           elevation: 0,
           selectedItemColor: AppColors.primary,
@@ -39,7 +62,6 @@ class HomeScreen extends StatelessWidget {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
             BottomNavigationBarItem(icon: Icon(Icons.description), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: ""),
             BottomNavigationBarItem(icon: Icon(Icons.category), label: ""),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
           ],
@@ -84,7 +106,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// 👋 WELCOME CARD
+              /// 👋 HEADER CARD
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(w * 0.06),
@@ -95,8 +117,6 @@ class HomeScreen extends StatelessWidget {
                       AppColors.primary.withOpacity(0.35),
                       AppColors.surface,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
                   ),
                 ),
                 child: Row(
@@ -139,20 +159,14 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * 0.035),
+              SizedBox(height: h * 0.03),
 
-              /// 📦 STORAGE TITLE (placeholder for next upgrade)
-              const Text(
-                "Storage",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              /// 🧭 SECTION CHIP (NEW UI ELEMENT)
+              _sectionChip("Storage Overview"),
 
               const SizedBox(height: 12),
 
+              /// 📦 STORAGE CARD (UPGRADED)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -186,24 +200,22 @@ class HomeScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("6.8 GB Used",
-                            style: TextStyle(
-                                color: AppColors.textSecondary)),
+                            style: TextStyle(color: AppColors.textSecondary)),
                         Text("10 GB Total",
-                            style: TextStyle(
-                                color: AppColors.textSecondary)),
+                            style: TextStyle(color: AppColors.textSecondary)),
                       ],
                     ),
                   ],
                 ),
               ),
 
-              SizedBox(height: h * 0.04),
+              SizedBox(height: h * 0.03),
 
-              /// 🔍 SEARCH BAR
+              /// 🔍 SEARCH
               Container(
-                height: h * 0.07,
+                height: h * 0.065,
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withOpacity(.8),
+                  color: AppColors.surface.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const TextField(
@@ -211,25 +223,17 @@ class HomeScreen extends StatelessWidget {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Search documents...",
-                    prefixIcon: Icon(Icons.search,
-                        color: AppColors.textSecondary),
+                    prefixIcon: Icon(Icons.search),
                     suffixIcon: Icon(Icons.mic_none_rounded,
                         color: AppColors.primary),
                   ),
                 ),
               ),
 
-              SizedBox(height: h * 0.04),
+              SizedBox(height: h * 0.03),
 
-              /// 📄 RECENT DOCUMENTS
-              const Text(
-                "Recent Documents",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              /// 📄 RECENT DOCS CHIP
+              _sectionChip("Recent Documents"),
 
               const SizedBox(height: 12),
 
@@ -239,15 +243,8 @@ class HomeScreen extends StatelessWidget {
 
               SizedBox(height: h * 0.03),
 
-              /// 📂 CATEGORIES
-              const Text(
-                "Categories",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              /// 📂 CATEGORIES CHIP
+              _sectionChip("Categories"),
 
               const SizedBox(height: 12),
 
@@ -274,21 +271,32 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// 📄 RECENT DOCUMENT CARD (premium UI)
-  static Widget _recentDocCard(
-      String title, String type, String time) {
+  /// 🧠 SECTION CHIP (NEW PREMIUM UI ELEMENT)
+  Widget _sectionChip(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  /// 📄 RECENT CARD (POLISHED)
+  Widget _recentDocCard(String title, String type, String time) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -325,9 +333,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// 📂 CATEGORY CARD (premium dashboard style)
-  static Widget _categoryCard(
-      IconData icon, String title, String count) {
+  /// 📂 CATEGORY CARD (MODERN)
+  Widget _categoryCard(IconData icon, String title, String count) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -336,7 +343,6 @@ class HomeScreen extends StatelessWidget {
             AppColors.primary.withOpacity(0.12),
             AppColors.surface,
           ],
-          begin: Alignment.topLeft,
         ),
       ),
       child: Padding(
