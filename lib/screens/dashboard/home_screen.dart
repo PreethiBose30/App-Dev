@@ -13,19 +13,37 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      /// 📱 BOTTOM NAVIGATION
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.description), label: "Docs"),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: "Add"),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: "Categories"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
+      /// 📱 PREMIUM BOTTOM NAVIGATION
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.textSecondary,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
+            BottomNavigationBarItem(icon: Icon(Icons.description), label: ""),
+            BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: ""),
+            BottomNavigationBarItem(icon: Icon(Icons.category), label: ""),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
+          ],
+        ),
       ),
 
       appBar: AppBar(
@@ -80,9 +98,6 @@ class HomeScreen extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.25),
-                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -124,9 +139,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * 0.04),
+              SizedBox(height: h * 0.035),
 
-              /// 📦 STORAGE CARD
+              /// 📦 STORAGE TITLE (placeholder for next upgrade)
               const Text(
                 "Storage",
                 style: TextStyle(
@@ -136,38 +151,28 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * 0.02),
+              const SizedBox(height: 12),
 
               Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(w * 0.05),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white10),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+                      children: const [
                         Text("Storage Used",
-                            style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.bold)),
+                            style: TextStyle(color: AppColors.textPrimary)),
                         Text("68%",
-                            style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold)),
+                            style: TextStyle(color: AppColors.primary)),
                       ],
                     ),
-
-                    const SizedBox(height: 15),
-
+                    const SizedBox(height: 12),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(20),
                       child: const LinearProgressIndicator(
                         value: 0.68,
                         minHeight: 10,
@@ -176,9 +181,7 @@ class HomeScreen extends StatelessWidget {
                             AlwaysStoppedAnimation(AppColors.primary),
                       ),
                     ),
-
-                    const SizedBox(height: 18),
-
+                    const SizedBox(height: 10),
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -200,9 +203,8 @@ class HomeScreen extends StatelessWidget {
               Container(
                 height: h * 0.07,
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withOpacity(.75),
+                  color: AppColors.surface.withOpacity(.8),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white10),
                 ),
                 child: const TextField(
                   style: TextStyle(color: AppColors.textPrimary),
@@ -229,11 +231,11 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               _recentDocCard("Invoice_2026.pdf", "PDF", "2h ago"),
               _recentDocCard("Project Notes", "Doc", "Yesterday"),
-              _recentDocCard("ID Proof Scan", "Image", "3 days ago"),
+              _recentDocCard("ID Scan", "Image", "3d ago"),
 
               SizedBox(height: h * 0.03),
 
@@ -247,7 +249,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               GridView.count(
                 shrinkWrap: true,
@@ -264,7 +266,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: h * 0.04),
+              SizedBox(height: h * 0.05),
             ],
           ),
         ),
@@ -272,23 +274,29 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// 📄 Recent Document Card
-  static Widget _recentDocCard(String title, String type, String time) {
+  /// 📄 RECENT DOCUMENT CARD (premium UI)
+  static Widget _recentDocCard(
+      String title, String type, String time) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.primary.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(Icons.description_outlined,
                 color: AppColors.primary),
@@ -310,38 +318,45 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.more_vert,
+          const Icon(Icons.more_horiz,
               color: AppColors.textSecondary),
         ],
       ),
     );
   }
 
-  /// 📂 Category Card
+  /// 📂 CATEGORY CARD (premium dashboard style)
   static Widget _categoryCard(
       IconData icon, String title, String count) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white10),
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.12),
+            AppColors.surface,
+          ],
+          begin: Alignment.topLeft,
+        ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: AppColors.primary, size: 28),
-          const SizedBox(height: 10),
-          Text(title,
-              style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text("$count items",
-              style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 28),
+            const Spacer(),
+            Text(title,
+                style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text("$count items",
+                style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12)),
+          ],
+        ),
       ),
     );
   }
