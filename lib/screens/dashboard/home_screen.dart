@@ -56,32 +56,93 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              Text(
-                "Good Evening",
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: w * 0.045,
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(w * 0.06),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.35),
+                      AppColors.surface,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.25),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.15),
+                      blurRadius: 25,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+              
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+              
+                        Text(
+                          "Good Evening",
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: w * 0.04,
+                          ),
+                        ),
+              
+                        SizedBox(height: h * 0.01),
+              
+                        Text(
+                          "Preethi",
+                          style: TextStyle(
+                            fontSize: w * 0.08,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+              
+                      ],
+                    ),
+              
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withOpacity(.15),
+                      ),
+                      child: const Icon(
+                        Icons.folder_copy_outlined,
+                        color: AppColors.primary,
+                        size: 34,
+                      ),
+                    )
+              
+                  ],
                 ),
               ),
-
-              SizedBox(height: h * 0.005),
-
-              Text(
-                "Preethi",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: w * 0.085,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
+              
               SizedBox(height: h * 0.035),
 
               Container(
                 height: h * 0.07,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.surface.withOpacity(.75),
                   borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.white10,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(.08),
+                      blurRadius: 20,
+                    )
+                  ],
                 ),
                 child: const TextField(
                   style: TextStyle(
