@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/auth/login_screen.dart';
+import 'screens/auth/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'Digital Inventory',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(), // Fits a clean dark theme
-      home: const LoginScreen(),
+      home: const HomeScreen(),
     );
   }
 }
