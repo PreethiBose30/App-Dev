@@ -9,6 +9,8 @@ android {
     namespace = "com.example.digital_inventory"
     compileSdk = flutter.compileSdkVersion
 
+    ndkVersion = "25.1.8937393"
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -44,4 +46,10 @@ flutter {
 
 dependencies {
     // Left empty and clean since we are focusing on pure frontend layouts for now
+}
+// Add this at the very bottom of android/app/build.gradle.kts
+tasks.whenTaskAdded {
+    if (name.startsWith("compile") && name.contains("Ndk")) {
+        enabled = false
+    }
 }
