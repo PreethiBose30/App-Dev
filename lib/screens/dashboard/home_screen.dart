@@ -3,6 +3,9 @@ import '../../theme/app_colors.dart';
 import '../products/product_detail_screen.dart';
 import '../products/products_screen.dart';
 import '../../utils/page_route.dart';
+import '../scanner/scan_screen.dart';
+import 'categories_screen.dart';
+import 'chatbot_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,7 +29,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ScanScreen(),
+            ),
+          );
+        },
         child: const Icon(Icons.add, color: Colors.black),
       ),
 
@@ -49,45 +59,27 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: currentIndex,
-            onTap: (index) {
-              if (index == 1) {
-                Navigator.push(
-                  context,
-                  FadeSlideRoute(
-                    page: const ProductsScreen(),
-                  ),
-                ).then((result) {
-
-                  if (result != null) {
-                    setState(() {
-
-                      recentProducts.removeWhere(
-                            (product) =>
-                        product["name"] == result["name"],
-                      );
-
-                      recentProducts.insert(
-                        0,
-                        {
-                          "name": result["name"],
-                          "category": result["category"],
-                        },
-                      );
-
-                      if (recentProducts.length > 3) {
-                        recentProducts.removeLast();
-                      }
-
-                    });
-                  }
-
-                });
-              } else {
-                setState(() {
-                  currentIndex = index;
-                });
-              }
-            },
+          onTap: (index) {
+            if (index == 1) {
+              Navigator.push(
+                context,
+                FadeSlideRoute(
+                  page: const CategoriesScreen(),
+                ),
+              );
+            } else if (index == 2) {
+              Navigator.push(
+                context,
+                FadeSlideRoute(
+                  page: const ChatbotTab(),
+                ),
+              );
+            } else {
+              setState(() {
+                currentIndex = index;
+              });
+            }
+          },
 
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -97,10 +89,22 @@ class _HomeScreenState extends State<HomeScreen> {
           showSelectedLabels: false,
           showUnselectedLabels: false,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.description), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.category), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: "",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.category),
+              label: "",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.auto_awesome),
+              label: "",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: "",
+            ),
           ],
         ),
       ),
@@ -233,9 +237,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("6.8 GB Used",
+                        Text("6.8 MB Used",
                             style: TextStyle(color: AppColors.textSecondary)),
-                        Text("10 GB Total",
+                        Text("10 MB Total",
                             style: TextStyle(color: AppColors.textSecondary)),
                       ],
                     ),
