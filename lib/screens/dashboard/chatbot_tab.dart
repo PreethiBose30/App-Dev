@@ -9,62 +9,27 @@ class ChatbotTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
 
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+
+        title: const Text(
+          'INVENTORY ASSISTANT',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.5,
+          ),
+        ),
+      ),
+
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
 
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                  ),
-
-                  const SizedBox(width: 14),
-
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
-                    children: [
-                      Text(
-                        'Inventory Assistant',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-
-                      SizedBox(height: 4),
-
-                      Text(
-                        'Ask anything about your inventory',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 28),
-
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -114,7 +79,8 @@ class ChatbotTab extends StatelessWidget {
                       const SizedBox(height: 8),
 
                       const Text(
-                        'Ask about your products, warranties,\nreminders, or inventory.',
+                        'Ask about your products, warranties, '
+                            'reminders, or inventory.',
                         textAlign: TextAlign.center,
 
                         style: TextStyle(
@@ -155,7 +121,9 @@ class ChatbotTab extends StatelessWidget {
                         ),
 
                         decoration: InputDecoration(
-                          hintText: 'Ask your inventory assistant...',
+                          hintText:
+                          'Ask your inventory assistant...',
+
                           hintStyle: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 13,
@@ -172,7 +140,7 @@ class ChatbotTab extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
 
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),

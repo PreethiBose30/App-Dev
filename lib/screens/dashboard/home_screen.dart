@@ -6,6 +6,7 @@ import '../../utils/page_route.dart';
 import '../scanner/scan_screen.dart';
 import 'categories_screen.dart';
 import 'chatbot_tab.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -74,6 +75,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   page: const ChatbotTab(),
                 ),
               );
+            } else if (index == 3) {
+              Navigator.push(
+                context,
+                FadeSlideRoute(
+                  page: const ProfileScreen(),
+                ),
+              );
             } else {
               setState(() {
                 currentIndex = index;
@@ -113,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         automaticallyImplyLeading: false,
+
         title: const Text(
           "Digital Inventory",
           style: TextStyle(
@@ -121,17 +130,17 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppColors.textPrimary,
           ),
         ),
+
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
-            color: AppColors.textPrimary,
-          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              backgroundColor: AppColors.primary,
-              child: const Icon(Icons.person_outline, color: Colors.black),
+
+            child: IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.notifications_none_rounded,
+              ),
+              color: AppColors.textPrimary,
             ),
           ),
         ],
