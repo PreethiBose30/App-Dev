@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../dashboard/home_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -85,9 +87,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 ElevatedButton(
                   onPressed: () {
-                    // Placeholder action to transition straight into dashboard
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Access Granted. Routing initialized.')),
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -101,7 +105,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/signup'),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignupScreen(),
+                      ),
+                    );
+                  },
                   child: const Text(
                     "CREATE SYSTEM ACCOUNT",
                     style: TextStyle(color: Color(0xFF7A7A7A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.2),
