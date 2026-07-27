@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # 1. Express API Container
+  api:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/digital_vault
+      - JWT_SECRET=super_secret_vault_key_2026
+    depends_on:
+      - mongo
+    restart: always
+
+  # 2. NoSQL Database Container (MongoDB)
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+
+volumes:
+  mongo-data:
