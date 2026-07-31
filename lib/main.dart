@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(l
+    return MaterialApp(
       title: 'Digital Inventory',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(), // Fits a clean dark theme
