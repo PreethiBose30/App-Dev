@@ -2,27 +2,40 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/product.dart';
 import '../../services/hive_service.dart';
-import 'product_detail_screen.dart';
+import '../products/product_detail_screen.dart';
 
-class ProductsScreen extends StatefulWidget {
-  const ProductsScreen({super.key});
+class CategoryProductsScreen extends StatefulWidget {
+  final String categoryName;
+
+  const CategoryProductsScreen({
+    super.key,
+    required this.categoryName,
+  });
 
   @override
-  State<ProductsScreen> createState() => _ProductsScreenState();
+  State<CategoryProductsScreen> createState() =>
+      _CategoryProductsScreenState();
 }
 
-class _ProductsScreenState extends State<ProductsScreen> {
-  List<Product> products = [];
+class _CategoryProductsScreenState
+    extends State<CategoryProductsScreen> {
+  List<Product> categoryProducts = [];
 
   @override
   void initState() {
     super.initState();
-    loadProducts();
+    loadCategoryProducts();
   }
 
-  void loadProducts() {
+  void loadCategoryProducts() {
+    final List<Product> allProducts =
+    HiveService.getProducts();
+
     setState(() {
-      products = HiveService.getProducts();
+      categoryProducts = allProducts.where((product) {
+        return product.category.trim().toLowerCase() ==
+            widget.categoryName.trim().toLowerCase();
+      }).toList();
     });
   }
 
@@ -39,41 +52,48 @@ class _ProductsScreenState extends State<ProductsScreen> {
           color: AppColors.textPrimary,
         ),
 
-        title: const Text(
-          "All Products",
-          style: TextStyle(
+        title: Text(
+          widget.categoryName.toUpperCase(),
+
+          style: const TextStyle(
             color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.5,
           ),
         ),
       ),
 
-      body: products.isEmpty
-          ? const Center(
+      body: categoryProducts.isEmpty
+          ? Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+          MainAxisAlignment.center,
+
           children: [
-            Icon(
+            const Icon(
               Icons.inventory_2_outlined,
               color: AppColors.textSecondary,
-              size: 50,
+              size: 48,
             ),
 
-            SizedBox(height: 14),
+            const SizedBox(height: 16),
 
             Text(
-              "No products added",
-              style: TextStyle(
+              'No products in ${widget.categoryName}',
+
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
 
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
 
-            Text(
-              "Add a product to see it here",
+            const Text(
+              'Add a product to see it here',
+
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
@@ -84,45 +104,62 @@ class _ProductsScreenState extends State<ProductsScreen> {
       )
 
           : ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
 
-        itemCount: products.length,
+        itemCount:
+        categoryProducts.length,
 
-        itemBuilder: (context, index) {
-          final Product product = products[index];
+        itemBuilder:
+            (context, index) {
+          final Product product =
+          categoryProducts[index];
 
           return InkWell(
             borderRadius:
             BorderRadius.circular(18),
 
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
 
                 MaterialPageRoute(
                   builder: (context) =>
                       ProductDetailScreen(
                         product: product,
-                      ),
+                      )
                 ),
               );
+
+              loadCategoryProducts();
             },
 
             child: Container(
               margin:
               const EdgeInsets.only(
-                bottom: 12,
+                bottom: 14,
               ),
 
               padding:
-              const EdgeInsets.all(16),
+              const EdgeInsets.all(
+                18,
+              ),
 
-              decoration: BoxDecoration(
-                color: AppColors.surface,
+              decoration:
+              BoxDecoration(
+                color:
+                AppColors.surface,
 
                 borderRadius:
                 BorderRadius.circular(
                   18,
+                ),
+
+                border: Border.all(
+                  color:
+                  Colors.white
+                      .withOpacity(
+                    0.06,
+                  ),
                 ),
               ),
 
@@ -130,16 +167,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 children: [
                   Container(
                     padding:
-                    const EdgeInsets.all(
-                      12,
-                    ),
+                    const EdgeInsets
+                        .all(12),
 
                     decoration:
                     BoxDecoration(
-                      color: AppColors
+                      color:
+                      AppColors
                           .primary
                           .withOpacity(
-                        0.15,
+                        0.12,
                       ),
 
                       borderRadius:
@@ -149,17 +186,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       ),
                     ),
 
-                    child: const Icon(
+                    child:
+                    const Icon(
                       Icons
                           .inventory_2_outlined,
 
                       color:
-                      AppColors.primary,
+                      AppColors
+                          .primary,
+
+                      size: 26,
                     ),
                   ),
 
                   const SizedBox(
-                    width: 14,
+                    width: 16,
                   ),
 
                   Expanded(
@@ -172,16 +213,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         Text(
                           product.name,
 
+                          maxLines: 1,
+
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
+
                           style:
                           const TextStyle(
-                            color: AppColors
+                            color:
+                            AppColors
                                 .textPrimary,
+
+                            fontSize:
+                            15,
 
                             fontWeight:
                             FontWeight
                                 .w600,
-
-                            fontSize: 16,
                           ),
                         ),
 
@@ -194,10 +243,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
                           style:
                           const TextStyle(
-                            color: AppColors
+                            color:
+                            AppColors
                                 .textSecondary,
 
-                            fontSize: 13,
+                            fontSize:
+                            12,
                           ),
                         ),
                       ],
@@ -208,7 +259,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     Icons
                         .chevron_right_rounded,
 
-                    color: AppColors
+                    color:
+                    AppColors
                         .textSecondary,
                   ),
                 ],

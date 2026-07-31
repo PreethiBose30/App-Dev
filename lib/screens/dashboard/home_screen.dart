@@ -3,6 +3,12 @@ import '../../theme/app_colors.dart';
 import '../products/product_detail_screen.dart';
 import '../products/products_screen.dart';
 import '../../utils/page_route.dart';
+import '../scanner/scan_screen.dart';
+import 'categories_screen.dart';
+import 'chatbot_tab.dart';
+import 'profile_screen.dart';
+import '../../models/product.dart';
+import '../../services/hive_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,7 +19,21 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int currentIndex = 0;
-  List<Map<String, String>> recentProducts = [];
+  List<Product> recentProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadProducts();
+  }
+
+  void loadProducts() {
+    final products = HiveService.getProducts();
+
+    setState(() {
+      recentProducts = products.reversed.take(3).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,24 +41,40 @@ class _HomeScreenState extends State<HomeScreen> {
     final w = size.width;
     final h = size.height;
 
+    const sectionGap = SizedBox(height: 24);
+
     return Scaffold(
       backgroundColor: AppColors.background,
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
-        onPressed: () {},
-        child: const Icon(Icons.add, color: Colors.black),
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ScanScreen(),
+            ),
+          );
+
+          loadProducts();
+        },
+        child: const Icon(
+          Icons.add,
+          color: Colors.black,
+        ),
       ),
 
       floatingActionButtonLocation:
-          FloatingActionButtonLocation.centerDocked,
+      FloatingActionButtonLocation.centerDocked,
 
       bottomNavigationBar: Container(
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(horizontal: 8),
+
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(30),
+
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.25),
@@ -47,466 +83,794 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+
         child: BottomNavigationBar(
           currentIndex: currentIndex,
-            onTap: (index) {
-              if (index == 1) {
-                Navigator.push(
-                  context,
-                  FadeSlideRoute(
-                    page: const ProductsScreen(),
-                  ),
-                ).then((result) {
 
-                  if (result != null) {
-                    setState(() {
+          onTap: (index) async {
+            if (index == 1) {
+              await Navigator.push(
+                context,
+                FadeSlideRoute(
+                  page: const CategoriesScreen(),
+                ),
+              );
 
-                      recentProducts.removeWhere(
-                            (product) =>
-                        product["name"] == result["name"],
-                      );
-
-                      recentProducts.insert(
-                        0,
-                        {
-                          "name": result["name"],
-                          "category": result["category"],
-                        },
-                      );
-
-                      if (recentProducts.length > 3) {
-                        recentProducts.removeLast();
-                      }
-
-                    });
-                  }
-
-                });
-              } else {
-                setState(() {
-                  currentIndex = index;
-                });
-              }
-            },
+              loadProducts();
+            } else if (index == 2) {
+              Navigator.push(
+                context,
+                FadeSlideRoute(
+                  page: const ChatbotTab(),
+                ),
+              );
+            } else if (index == 3) {
+              Navigator.push(
+                context,
+                FadeSlideRoute(
+                  page: const ProfileScreen(),
+                ),
+              );
+            } else {
+              setState(() {
+                currentIndex = index;
+              });
+            }
+          },
 
           backgroundColor: Colors.transparent,
           elevation: 0,
+
           selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
-          type: BottomNavigationBarType.fixed,
+          unselectedItemColor:
+          AppColors.textSecondary,
+
+          type:
+          BottomNavigationBarType.fixed,
+
           showSelectedLabels: false,
           showUnselectedLabels: false,
+
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.description), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.category), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: "",
+            ),
+
+            BottomNavigationBarItem(
+              icon: Icon(Icons.category),
+              label: "",
+            ),
+
+            BottomNavigationBarItem(
+              icon: Icon(Icons.auto_awesome),
+              label: "",
+            ),
+
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: "",
+            ),
           ],
         ),
       ),
 
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor:
+        AppColors.background,
+
         elevation: 0,
-        automaticallyImplyLeading: false,
+
+        automaticallyImplyLeading:
+        false,
+
         title: const Text(
           "Digital Inventory",
+
           style: TextStyle(
             fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            fontWeight:
+            FontWeight.bold,
+
+            color:
+            AppColors.textPrimary,
           ),
         ),
+
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
-            color: AppColors.textPrimary,
-          ),
           Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              backgroundColor: AppColors.primary,
-              child: const Icon(Icons.person_outline, color: Colors.black),
+            padding:
+            const EdgeInsets.only(
+              right: 16,
+            ),
+
+            child: IconButton(
+              onPressed: () {},
+
+              icon: const Icon(
+                Icons
+                    .notifications_none_rounded,
+              ),
+
+              color:
+              AppColors.textPrimary,
             ),
           ),
         ],
       ),
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: w * 0.05,
-            vertical: h * 0.02,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: () async {
+            loadProducts();
+          },
 
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(w * 0.06),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withOpacity(0.35),
-                      AppColors.surface,
+          child: SingleChildScrollView(
+            physics:
+            const AlwaysScrollableScrollPhysics(),
+
+            padding:
+            EdgeInsets.symmetric(
+              horizontal: w * 0.05,
+              vertical: h * 0.02,
+            ),
+
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+
+              children: [
+                Container(
+                  width: double.infinity,
+
+                  padding:
+                  EdgeInsets.all(
+                    w * 0.06,
+                  ),
+
+                  decoration:
+                  BoxDecoration(
+                    borderRadius:
+                    BorderRadius
+                        .circular(28),
+
+                    gradient:
+                    LinearGradient(
+                      colors: [
+                        AppColors.primary
+                            .withOpacity(
+                          0.35,
+                        ),
+
+                        AppColors.surface,
+                      ],
+                    ),
+                  ),
+
+                  child: Row(
+                    mainAxisAlignment:
+                    MainAxisAlignment
+                        .spaceBetween,
+
+                    children: [
+                      Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
+
+                        children: [
+                          Text(
+                            "Good Evening",
+
+                            style:
+                            TextStyle(
+                              color: AppColors
+                                  .textSecondary,
+
+                              fontSize:
+                              w * 0.04,
+                            ),
+                          ),
+
+                          SizedBox(
+                            height:
+                            h * 0.01,
+                          ),
+
+                          Text(
+                            "Preethi",
+
+                            style:
+                            TextStyle(
+                              fontSize:
+                              w * 0.08,
+
+                              fontWeight:
+                              FontWeight
+                                  .bold,
+
+                              color: AppColors
+                                  .textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Container(
+                        padding:
+                        const EdgeInsets
+                            .all(15),
+
+                        decoration:
+                        BoxDecoration(
+                          shape:
+                          BoxShape.circle,
+
+                          color: AppColors
+                              .primary
+                              .withOpacity(
+                            .15,
+                          ),
+                        ),
+
+                        child:
+                        const Icon(
+                          Icons
+                              .folder_copy_outlined,
+
+                          color:
+                          AppColors.primary,
+
+                          size: 34,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Good Evening",
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: w * 0.04,
+
+                sectionGap,
+
+                _sectionChip(
+                  "Storage Overview",
+                ),
+
+                const SizedBox(
+                  height: 12,
+                ),
+
+                Container(
+                  padding:
+                  const EdgeInsets.all(
+                    16,
+                  ),
+
+                  decoration:
+                  BoxDecoration(
+                    color:
+                    AppColors.surface,
+
+                    borderRadius:
+                    BorderRadius
+                        .circular(22),
+                  ),
+
+                  child: Column(
+                    children: [
+                      const Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment
+                            .spaceBetween,
+
+                        children: [
+                          Text(
+                            "Storage Used",
+
+                            style:
+                            TextStyle(
+                              color:
+                              AppColors
+                                  .textPrimary,
+                            ),
+                          ),
+
+                          Text(
+                            "68%",
+
+                            style:
+                            TextStyle(
+                              color:
+                              AppColors
+                                  .primary,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
+
+                      ClipRRect(
+                        borderRadius:
+                        BorderRadius
+                            .circular(20),
+
+                        child:
+                        const LinearProgressIndicator(
+                          value: 0.68,
+
+                          minHeight: 10,
+
+                          backgroundColor:
+                          Colors.white12,
+
+                          valueColor:
+                          AlwaysStoppedAnimation(
+                            AppColors.primary,
                           ),
                         ),
-                        SizedBox(height: h * 0.01),
+                      ),
+
+                      const SizedBox(
+                        height: 10,
+                      ),
+
+                      const Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment
+                            .spaceBetween,
+
+                        children: [
+                          Text(
+                            "6.8 MB Used",
+
+                            style:
+                            TextStyle(
+                              color:
+                              AppColors
+                                  .textSecondary,
+                            ),
+                          ),
+
+                          Text(
+                            "10 MB Total",
+
+                            style:
+                            TextStyle(
+                              color:
+                              AppColors
+                                  .textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                sectionGap,
+
+                Container(
+                  height:
+                  h * 0.065,
+
+                  padding:
+                  const EdgeInsets
+                      .symmetric(
+                    horizontal: 16,
+                  ),
+
+                  decoration:
+                  BoxDecoration(
+                    color: AppColors
+                        .surface
+                        .withOpacity(
+                      0.9,
+                    ),
+
+                    borderRadius:
+                    BorderRadius
+                        .circular(18),
+                  ),
+
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.search,
+
+                        color: AppColors
+                            .textSecondary,
+                      ),
+
+                      SizedBox(
+                        width: 16,
+                      ),
+
+                      Expanded(
+                        child:
+                        TextField(
+                          style:
+                          TextStyle(
+                            color:
+                            AppColors
+                                .textPrimary,
+                          ),
+
+                          decoration:
+                          InputDecoration(
+                            border:
+                            InputBorder
+                                .none,
+
+                            hintText:
+                            "Search products...",
+
+                            hintStyle:
+                            TextStyle(
+                              color:
+                              AppColors
+                                  .textSecondary,
+                            ),
+
+                            isCollapsed:
+                            true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                sectionGap,
+
+                _sectionChip(
+                  "Recent Products",
+                ),
+
+                const SizedBox(
+                  height: 12,
+                ),
+
+                if (recentProducts
+                    .isEmpty)
+                  Container(
+                    width:
+                    double.infinity,
+
+                    padding:
+                    const EdgeInsets
+                        .symmetric(
+                      vertical: 24,
+                      horizontal: 20,
+                    ),
+
+                    decoration:
+                    BoxDecoration(
+                      color:
+                      AppColors.surface,
+
+                      borderRadius:
+                      BorderRadius
+                          .circular(18),
+                    ),
+
+                    child:
+                    const Column(
+                      children: [
+                        Icon(
+                          Icons
+                              .inventory_2_outlined,
+
+                          color: AppColors
+                              .textSecondary,
+
+                          size: 30,
+                        ),
+
+                        SizedBox(
+                          height: 10,
+                        ),
+
                         Text(
-                          "Preethi",
-                          style: TextStyle(
-                            fontSize: w * 0.08,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                          "No recent products",
+
+                          style:
+                          TextStyle(
+                            color:
+                            AppColors
+                                .textPrimary,
+
+                            fontWeight:
+                            FontWeight
+                                .w600,
+                          ),
+                        ),
+
+                        SizedBox(
+                          height: 4,
+                        ),
+
+                        Text(
+                          "Products you add will appear here",
+
+                          style:
+                          TextStyle(
+                            color:
+                            AppColors
+                                .textSecondary,
+
+                            fontSize: 12,
                           ),
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary.withOpacity(.15),
-                      ),
-                      child: const Icon(
-                        Icons.folder_copy_outlined,
-                        color: AppColors.primary,
-                        size: 34,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-
-              SizedBox(height: h * 0.03),
-
-              _sectionChip("Storage Overview"),
-
-              const SizedBox(height: 12),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text("Storage Used",
-                            style: TextStyle(color: AppColors.textPrimary)),
-                        Text("68%",
-                            style: TextStyle(color: AppColors.primary)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: const LinearProgressIndicator(
-                        value: 0.68,
-                        minHeight: 10,
-                        backgroundColor: Colors.white12,
-                        valueColor:
-                            AlwaysStoppedAnimation(AppColors.primary),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("6.8 GB Used",
-                            style: TextStyle(color: AppColors.textSecondary)),
-                        Text("10 GB Total",
-                            style: TextStyle(color: AppColors.textSecondary)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: h * 0.03),
-
-              Container(
-                height: h * 0.065,
-                decoration: BoxDecoration(
-                  color: AppColors.surface.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const TextField(
-                  style: TextStyle(color: AppColors.textPrimary),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "Search documents...",
-                    prefixIcon: Icon(Icons.search),
-                    suffixIcon: Icon(Icons.mic_none_rounded,
-                        color: AppColors.primary),
+                  )
+                else
+                  ...recentProducts.map(
+                        (product) =>
+                        _productCard(
+                          product,
+                        ),
                   ),
+
+                const SizedBox(
+                  height: 8,
                 ),
-              ),
 
-              SizedBox(height: h * 0.03),
+                SizedBox(
+                  width:
+                  double.infinity,
 
-              _sectionChip("Recent Documents"),
+                  child:
+                  OutlinedButton(
+                    onPressed:
+                        () async {
+                      await Navigator
+                          .push(
+                        context,
 
-              const SizedBox(height: 12),
+                        MaterialPageRoute(
+                          builder:
+                              (
+                              context,
+                              ) =>
+                          const ProductsScreen(),
+                        ),
+                      );
 
-              if (recentProducts.isEmpty)
-                const Text(
-                  "No recently opened products",
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                  ),
-                )
-              else
-                ...recentProducts.map(
-                      (product) => _productCard(
-                    product["name"]!,
-                    product["category"]!,
+                      loadProducts();
+                    },
+
+                    style:
+                    OutlinedButton
+                        .styleFrom(
+                      foregroundColor:
+                      AppColors.primary,
+
+                      side:
+                      const BorderSide(
+                        color:
+                        AppColors
+                            .primary,
+                      ),
+
+                      padding:
+                      const EdgeInsets
+                          .symmetric(
+                        vertical: 15,
+                      ),
+
+                      shape:
+                      RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius
+                            .circular(
+                          16,
+                        ),
+                      ),
+                    ),
+
+                    child:
+                    const Text(
+                      "VIEW ALL PRODUCTS",
+
+                      style:
+                      TextStyle(
+                        fontWeight:
+                        FontWeight
+                            .bold,
+
+                        letterSpacing:
+                        1,
+                      ),
+                    ),
                   ),
                 ),
 
-              _sectionChip("Categories"),
-
-              const SizedBox(height: 12),
-
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.2,
-                children: [
-                  _categoryCard(Icons.picture_as_pdf, "PDFs", "12"),
-                  _categoryCard(Icons.image_outlined, "Images", "8"),
-                  _categoryCard(Icons.scanner_outlined, "Scans", "5"),
-                  _categoryCard(Icons.folder_outlined, "Folders", "3"),
-                ],
-              ),
-
-              SizedBox(height: h * 0.05),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _sectionChip(String title) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _productCard(String name, String category) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-
-          // remove if already exists
-          recentProducts.removeWhere(
-                (product) => product["name"] == name,
-          );
-
-          // add to beginning
-          recentProducts.insert(
-            0,
-            {
-              "name": name,
-              "category": category,
-            },
-          );
-
-          // keep only latest 3
-          if (recentProducts.length > 3) {
-            recentProducts.removeLast();
-          }
-
-        });
-
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(
-              productName: name,
-              category: category,
+                SizedBox(
+                  height:
+                  h * 0.05,
+                ),
+              ],
             ),
           ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
         ),
+      ),
+    );
+  }
+
+  Widget _sectionChip(
+      String title,
+      ) {
+    return Container(
+      padding:
+      const EdgeInsets
+          .symmetric(
+        horizontal: 14,
+        vertical: 8,
+      ),
+
+      decoration:
+      BoxDecoration(
+        color:
+        AppColors.primary
+            .withOpacity(
+          0.12,
+        ),
+
+        borderRadius:
+        BorderRadius.circular(
+          20,
+        ),
+      ),
+
+      child: Text(
+        title,
+
+        style:
+        const TextStyle(
+          color:
+          AppColors.primary,
+
+          fontWeight:
+          FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _productCard(
+      Product product,
+      ) {
+    return InkWell(
+      onTap:
+          () async {
+        await Navigator.push(
+          context,
+
+          MaterialPageRoute(
+            builder:
+                (context) =>
+                ProductDetailScreen(
+                  product:
+                  product,
+                ),
+          ),
+        );
+
+        loadProducts();
+      },
+
+      child: Container(
+        margin:
+        const EdgeInsets.only(
+          bottom: 12,
+        ),
+
+        padding:
+        const EdgeInsets.all(
+          14,
+        ),
+
+        decoration:
+        BoxDecoration(
+          color:
+          AppColors.surface,
+
+          borderRadius:
+          BorderRadius.circular(
+            18,
+          ),
+        ),
+
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(14),
+              padding:
+              const EdgeInsets
+                  .all(10),
+
+              decoration:
+              BoxDecoration(
+                color:
+                AppColors
+                    .primary
+                    .withOpacity(
+                  0.12,
+                ),
+
+                borderRadius:
+                BorderRadius
+                    .circular(
+                  14,
+                ),
               ),
-              child: const Icon(
-                Icons.inventory_2_outlined,
-                color: AppColors.primary,
+
+              child:
+              const Icon(
+                Icons
+                    .inventory_2_outlined,
+
+                color:
+                AppColors.primary,
               ),
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  category,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _recentDocCard(String title, String type, String time) {
-  return InkWell(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProductDetailScreen(
-            productName: "MacBook Pro M2",
-            category: "Electronics",
-          ),
-        ),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(14),
+            const SizedBox(
+              width: 12,
             ),
-            child: const Icon(
-              Icons.description_outlined,
-              color: AppColors.primary,
-            ),
-          ),
 
-          const SizedBox(width: 12),
+            Expanded(
+              child:
+              Column(
+                crossAxisAlignment:
+                CrossAxisAlignment
+                    .start,
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
+                children: [
+                  Text(
+                    product.name,
+
+                    style:
+                    const TextStyle(
+                      color:
+                      AppColors
+                          .textPrimary,
+
+                      fontWeight:
+                      FontWeight
+                          .w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "$type • $time",
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
+
+                  const SizedBox(
+                    height: 4,
                   ),
-                ),
-              ],
+
+                  Text(
+                    product.category,
+
+                    style:
+                    const TextStyle(
+                      color:
+                      AppColors
+                          .textSecondary,
+
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const Icon(
-            Icons.more_horiz,
-            color: AppColors.textSecondary,
-          ),
-        ],
-      ),
-    ),
-  );
-}
+            const Icon(
+              Icons
+                  .chevron_right_rounded,
 
-  Widget _categoryCard(IconData icon, String title, String count) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.12),
-            AppColors.surface,
-          ],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: AppColors.primary, size: 28),
-            const Spacer(),
-            Text(title,
-                style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text("$count items",
-                style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12)),
+              color:
+              AppColors
+                  .textSecondary,
+            ),
           ],
         ),
       ),
