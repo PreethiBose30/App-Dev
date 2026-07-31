@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'screens/dashboard/home_screen.dart';
 import 'screens/splash/splash_screen.dart';
+import 'services/hive_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await HiveService.init();
+
   runApp(const MyApp());
 }
 

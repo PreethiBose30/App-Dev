@@ -1,32 +1,56 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../models/product.dart';
+import '../../services/hive_service.dart';
 import 'category_products_screen.dart';
 
-class CategoriesScreen extends StatelessWidget {
+class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
 
-  final List<Map<String, dynamic>> categories = const [
+  @override
+  State<CategoriesScreen> createState() => _CategoriesScreenState();
+}
+
+class _CategoriesScreenState extends State<CategoriesScreen> {
+  final List<Map<String, dynamic>> categories = [
     {
       'name': 'Electronics',
       'icon': Icons.devices_outlined,
-      'count': 3,
     },
     {
       'name': 'Appliances',
       'icon': Icons.kitchen_outlined,
-      'count': 2,
     },
     {
       'name': 'Documents',
       'icon': Icons.description_outlined,
-      'count': 5,
     },
     {
       'name': 'Furniture',
       'icon': Icons.chair_outlined,
-      'count': 1,
     },
   ];
+
+  List<Product> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadProducts();
+  }
+
+  void loadProducts() {
+    setState(() {
+      products = HiveService.getProducts();
+    });
+  }
+
+  int getCategoryCount(String categoryName) {
+    return products.where((product) {
+      return product.category.trim().toLowerCase() ==
+          categoryName.trim().toLowerCase();
+    }).length;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,16 +89,28 @@ class CategoriesScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final category = categories[index];
 
+            final String categoryName =
+            category['name'] as String;
+
+            final IconData categoryIcon =
+            category['icon'] as IconData;
+
+            final int productCount =
+            getCategoryCount(categoryName);
+
             return GestureDetector(
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CategoryProductsScreen(
-                      categoryName: category['name'],
-                    ),
+                    builder: (context) =>
+                        CategoryProductsScreen(
+                          categoryName: categoryName,
+                        ),
                   ),
                 );
+
+                loadProducts();
               },
 
               child: Container(
@@ -85,16 +121,18 @@ class CategoriesScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
 
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.06),
+                    color:
+                    Colors.white.withOpacity(0.06),
                   ),
                 ),
 
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
 
                   children: [
                     Icon(
-                      category['icon'],
+                      categoryIcon,
                       color: AppColors.primary,
                       size: 34,
                     ),
@@ -102,20 +140,30 @@ class CategoriesScreen extends StatelessWidget {
                     const Spacer(),
 
                     Text(
-                      category['name'],
+                      categoryName,
+
                       style: const TextStyle(
-                        color: AppColors.textPrimary,
+                        color:
+                        AppColors.textPrimary,
+
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+
+                        fontWeight:
+                        FontWeight.w600,
                       ),
                     ),
 
                     const SizedBox(height: 6),
 
                     Text(
-                      '${category['count']} products',
+                      productCount == 1
+                          ? '1 product'
+                          : '$productCount products',
+
                       style: const TextStyle(
-                        color: AppColors.textSecondary,
+                        color:
+                        AppColors.textSecondary,
+
                         fontSize: 12,
                       ),
                     ),

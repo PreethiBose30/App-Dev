@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../models/product.dart';
+import '../../services/hive_service.dart';
+import '../products/product_detail_screen.dart';
 
-class CategoryProductsScreen extends StatelessWidget {
+class CategoryProductsScreen extends StatefulWidget {
   final String categoryName;
 
   const CategoryProductsScreen({
@@ -9,20 +12,32 @@ class CategoryProductsScreen extends StatelessWidget {
     required this.categoryName,
   });
 
-  final List<Map<String, String>> products = const [
-    {
-      'name': 'Wireless Keyboard',
-      'details': 'Electronics',
-    },
-    {
-      'name': 'Bluetooth Speaker',
-      'details': 'Electronics',
-    },
-    {
-      'name': 'Laptop',
-      'details': 'Electronics',
-    },
-  ];
+  @override
+  State<CategoryProductsScreen> createState() =>
+      _CategoryProductsScreenState();
+}
+
+class _CategoryProductsScreenState
+    extends State<CategoryProductsScreen> {
+  List<Product> categoryProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadCategoryProducts();
+  }
+
+  void loadCategoryProducts() {
+    final List<Product> allProducts =
+    HiveService.getProducts();
+
+    setState(() {
+      categoryProducts = allProducts.where((product) {
+        return product.category.trim().toLowerCase() ==
+            widget.categoryName.trim().toLowerCase();
+      }).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +53,8 @@ class CategoryProductsScreen extends StatelessWidget {
         ),
 
         title: Text(
-          categoryName.toUpperCase(),
+          widget.categoryName.toUpperCase(),
+
           style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -48,76 +64,207 @@ class CategoryProductsScreen extends StatelessWidget {
         ),
       ),
 
-      body: ListView.builder(
-        padding: const EdgeInsets.all(20),
+      body: categoryProducts.isEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment:
+          MainAxisAlignment.center,
 
-        itemCount: products.length,
+          children: [
+            const Icon(
+              Icons.inventory_2_outlined,
+              color: AppColors.textSecondary,
+              size: 48,
+            ),
 
-        itemBuilder: (context, index) {
-          final product = products[index];
+            const SizedBox(height: 16),
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 14),
+            Text(
+              'No products in ${widget.categoryName}',
 
-            padding: const EdgeInsets.all(18),
-
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-
-              borderRadius: BorderRadius.circular(18),
-
-              border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
 
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
+            const SizedBox(height: 6),
 
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
+            const Text(
+              'Add a product to see it here',
 
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      )
 
-                  child: const Icon(
-                    Icons.inventory_2_outlined,
-                    color: AppColors.primary,
-                    size: 26,
-                  ),
+          : ListView.builder(
+        padding: const EdgeInsets.all(20),
+
+        itemCount:
+        categoryProducts.length,
+
+        itemBuilder:
+            (context, index) {
+          final Product product =
+          categoryProducts[index];
+
+          return InkWell(
+            borderRadius:
+            BorderRadius.circular(18),
+
+            onTap: () async {
+              await Navigator.push(
+                context,
+
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ProductDetailScreen(
+                        product: product,
+                      )
+                ),
+              );
+
+              loadCategoryProducts();
+            },
+
+            child: Container(
+              margin:
+              const EdgeInsets.only(
+                bottom: 14,
+              ),
+
+              padding:
+              const EdgeInsets.all(
+                18,
+              ),
+
+              decoration:
+              BoxDecoration(
+                color:
+                AppColors.surface,
+
+                borderRadius:
+                BorderRadius.circular(
+                  18,
                 ),
 
-                const SizedBox(width: 16),
+                border: Border.all(
+                  color:
+                  Colors.white
+                      .withOpacity(
+                    0.06,
+                  ),
+                ),
+              ),
 
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                children: [
+                  Container(
+                    padding:
+                    const EdgeInsets
+                        .all(12),
 
-                  children: [
-                    Text(
-                      product['name']!,
+                    decoration:
+                    BoxDecoration(
+                      color:
+                      AppColors
+                          .primary
+                          .withOpacity(
+                        0.12,
+                      ),
 
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                      borderRadius:
+                      BorderRadius
+                          .circular(
+                        14,
                       ),
                     ),
 
-                    const SizedBox(height: 5),
+                    child:
+                    const Icon(
+                      Icons
+                          .inventory_2_outlined,
 
-                    Text(
-                      product['details']!,
+                      color:
+                      AppColors
+                          .primary,
 
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
+                      size: 26,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+
+                  const SizedBox(
+                    width: 16,
+                  ),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
+
+                      children: [
+                        Text(
+                          product.name,
+
+                          maxLines: 1,
+
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
+
+                          style:
+                          const TextStyle(
+                            color:
+                            AppColors
+                                .textPrimary,
+
+                            fontSize:
+                            15,
+
+                            fontWeight:
+                            FontWeight
+                                .w600,
+                          ),
+                        ),
+
+                        const SizedBox(
+                          height: 5,
+                        ),
+
+                        Text(
+                          product.category,
+
+                          style:
+                          const TextStyle(
+                            color:
+                            AppColors
+                                .textSecondary,
+
+                            fontSize:
+                            12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Icon(
+                    Icons
+                        .chevron_right_rounded,
+
+                    color:
+                    AppColors
+                        .textSecondary,
+                  ),
+                ],
+              ),
             ),
           );
         },

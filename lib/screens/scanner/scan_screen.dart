@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'result_screen.dart';
-
+import '../dashboard/add_product_screen.dart';
 import '../../services/mlkit_service.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -59,6 +59,15 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
+  Future<void> _openAddProduct() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddProductScreen(),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _mlKitService.dispose();
@@ -69,6 +78,7 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
+
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D0D0D),
         elevation: 0,
@@ -76,7 +86,7 @@ class _ScanScreenState extends State<ScanScreen> {
           color: Color(0xFFF4F4F0),
         ),
         title: const Text(
-          'SCAN DOCUMENT',
+          'ADD PRODUCT',
           style: TextStyle(
             color: Color(0xFFF4F4F0),
             fontSize: 16,
@@ -85,15 +95,17 @@ class _ScanScreenState extends State<ScanScreen> {
           ),
         ),
       ),
+
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
+
         child: Column(
           children: [
             const SizedBox(height: 40),
 
             Container(
               width: double.infinity,
-              height: 300,
+              height: 250,
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(28),
@@ -101,6 +113,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   color: Colors.white.withOpacity(0.08),
                 ),
               ),
+
               child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -109,9 +122,11 @@ class _ScanScreenState extends State<ScanScreen> {
                     size: 70,
                     color: Color(0xFFF4F4F0),
                   ),
+
                   SizedBox(height: 20),
+
                   Text(
-                    'DOCUMENT SCANNER',
+                    'ADD A PRODUCT',
                     style: TextStyle(
                       color: Color(0xFFF4F4F0),
                       fontSize: 16,
@@ -119,9 +134,12 @@ class _ScanScreenState extends State<ScanScreen> {
                       letterSpacing: 1.2,
                     ),
                   ),
+
                   SizedBox(height: 8),
+
                   Text(
-                    'Extract text from your documents',
+                    'Scan a document or enter details manually',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Color(0xFF7A7A7A),
                       fontSize: 13,
@@ -131,38 +149,81 @@ class _ScanScreenState extends State<ScanScreen> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
 
-            const Text(
-              'Upload an image of a document and let OCR extract the text automatically.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF7A7A7A),
-                fontSize: 14,
-                height: 1.5,
+            SizedBox(
+              width: double.infinity,
+
+              child: ElevatedButton.icon(
+                onPressed: _isProcessing ? null : _pickImage,
+
+                icon: const Icon(
+                  Icons.upload_file,
+                ),
+
+                label: Text(
+                  _isProcessing
+                      ? 'PROCESSING...'
+                      : 'SCAN DOCUMENT',
+                ),
+
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF4F4F0),
+                  foregroundColor: const Color(0xFF0D0D0D),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            SizedBox(
+              width: double.infinity,
+
+              child: OutlinedButton.icon(
+                onPressed: _openAddProduct,
+
+                icon: const Icon(
+                  Icons.edit_outlined,
+                ),
+
+                label: const Text(
+                  'ADD MANUALLY',
+                ),
+
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFF4F4F0),
+
+                  side: const BorderSide(
+                    color: Color(0xFF555555),
+                  ),
+
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                  ),
+
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
               ),
             ),
 
             const Spacer(),
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isProcessing ? null : _pickImage,
-                icon: const Icon(Icons.upload_file),
-                label: Text(
-                  _isProcessing
-                      ? 'PROCESSING...'
-                      : 'SELECT DOCUMENT',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF4F4F0),
-                  foregroundColor: const Color(0xFF0D0D0D),
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
+            const Text(
+              'Scan bills, warranty cards, insurance papers, '
+                  'or add product information manually.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF7A7A7A),
+                fontSize: 13,
+                height: 1.5,
               ),
             ),
 
