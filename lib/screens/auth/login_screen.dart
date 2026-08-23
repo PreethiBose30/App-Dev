@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
+import '../../services/api_client.dart';
 import '../dashboard/home_screen.dart';
 import 'signup_screen.dart';
 
@@ -12,12 +14,40 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email and password')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await AuthService.login(email: email, password: password);
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -56,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       TextFormField(
                         controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
                         style: const TextStyle(color: Color(0xFFF4F4F0), fontSize: 15),
                         decoration: InputDecoration(
                           labelText: 'ACCESS IDENTITY / EMAIL',
@@ -86,21 +117,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 36),
 
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
-                  },
+                  onPressed: _isSubmitting ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF4F4F0), // Ivory Fill
                     foregroundColor: const Color(0xFF0D0D0D),
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text('AUTHORIZE ACCESS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0D0D0D)),
+                        )
+                      : const Text('AUTHORIZE ACCESS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
                 ),
                 const SizedBox(height: 24),
 

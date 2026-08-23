@@ -1,11 +1,43 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../services/auth_service.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  Future<void> _logout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Log out?', style: TextStyle(color: AppColors.textPrimary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('LOG OUT', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await AuthService.logout();
+    if (!context.mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = AuthService.cachedUser;
+
     return Scaffold(
       backgroundColor: AppColors.background,
 
@@ -65,28 +97,43 @@ class ProfileScreen extends StatelessWidget {
 
                     const SizedBox(width: 16),
 
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
 
                       children: [
                         Text(
-                          'Your Name',
-                          style: TextStyle(
+                          user?.name ?? 'Unknown user',
+                          style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
 
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
 
                         Text(
-                          'your.email@example.com',
-                          style: TextStyle(
+                          user?.email ?? '',
+                          style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
+
+                        if (user?.isAdmin == true) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'ADMIN',
+                              style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -155,7 +202,7 @@ class ProfileScreen extends StatelessWidget {
                 width: double.infinity,
 
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => _logout(context),
 
                   icon: const Icon(
                     Icons.logout,

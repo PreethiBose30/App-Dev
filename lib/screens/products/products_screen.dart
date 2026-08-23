@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/product.dart';
-import '../../services/hive_service.dart';
+import '../../services/asset_service.dart';
+import '../../services/api_client.dart';
 import 'product_detail_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
-  const ProductsScreen({super.key});
+  final String? initialSearch;
+
+  const ProductsScreen({super.key, this.initialSearch});
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -13,210 +16,177 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   List<Product> products = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  late final TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
-    loadProducts();
+    _searchController = TextEditingController(text: widget.initialSearch ?? '');
+    loadProducts(search: widget.initialSearch);
   }
 
-  void loadProducts() {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadProducts({String? search}) async {
     setState(() {
-      products = HiveService.getProducts();
+      _isLoading = true;
+      _errorMessage = null;
     });
+    try {
+      final result = await AssetService.getAssets(search: search);
+      if (!mounted) return;
+      setState(() {
+        products = result;
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-
-        iconTheme: const IconThemeData(
-          color: AppColors.textPrimary,
-        ),
-
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
         title: const Text(
           "All Products",
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
         ),
       ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+              child: TextField(
+                controller: _searchController,
+                onSubmitted: (value) => loadProducts(search: value.trim()),
+                textInputAction: TextInputAction.search,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Search products...',
+                  hintStyle: const TextStyle(color: AppColors.textSecondary),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.search, color: AppColors.textSecondary),
+                    onPressed: () => loadProducts(search: _searchController.text.trim()),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
 
-      body: products.isEmpty
-          ? const Center(
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
+
+    if (_errorMessage != null) {
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              color: AppColors.textSecondary,
-              size: 50,
-            ),
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+            const SizedBox(height: 12),
+            Text(_errorMessage!, style: const TextStyle(color: AppColors.textPrimary)),
+            const SizedBox(height: 12),
+            TextButton(onPressed: () => loadProducts(search: _searchController.text.trim()), child: const Text('RETRY')),
+          ],
+        ),
+      );
+    }
 
+    if (products.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inventory_2_outlined, color: AppColors.textSecondary, size: 50),
             SizedBox(height: 14),
-
             Text(
-              "No products added",
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              "No products found",
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
             ),
-
             SizedBox(height: 6),
-
             Text(
               "Add a product to see it here",
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ],
         ),
-      )
+      );
+    }
 
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final Product product = products[index];
 
-        itemCount: products.length,
-
-        itemBuilder: (context, index) {
-          final Product product = products[index];
-
-          return InkWell(
-            borderRadius:
-            BorderRadius.circular(18),
-
-            onTap: () {
-              Navigator.push(
-                context,
-
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ProductDetailScreen(
-                        product: product,
-                      ),
+        return InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProductDetailScreen(product: product)),
+            );
+            loadProducts(search: _searchController.text.trim());
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.inventory_2_outlined, color: AppColors.primary),
                 ),
-              );
-            },
-
-            child: Container(
-              margin:
-              const EdgeInsets.only(
-                bottom: 12,
-              ),
-
-              padding:
-              const EdgeInsets.all(16),
-
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-
-                borderRadius:
-                BorderRadius.circular(
-                  18,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 16),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(product.category, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
                 ),
-              ),
-
-              child: Row(
-                children: [
-                  Container(
-                    padding:
-                    const EdgeInsets.all(
-                      12,
-                    ),
-
-                    decoration:
-                    BoxDecoration(
-                      color: AppColors
-                          .primary
-                          .withOpacity(
-                        0.15,
-                      ),
-
-                      borderRadius:
-                      BorderRadius
-                          .circular(
-                        14,
-                      ),
-                    ),
-
-                    child: const Icon(
-                      Icons
-                          .inventory_2_outlined,
-
-                      color:
-                      AppColors.primary,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    width: 14,
-                  ),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-
-                      children: [
-                        Text(
-                          product.name,
-
-                          style:
-                          const TextStyle(
-                            color: AppColors
-                                .textPrimary,
-
-                            fontWeight:
-                            FontWeight
-                                .w600,
-
-                            fontSize: 16,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 5,
-                        ),
-
-                        Text(
-                          product.category,
-
-                          style:
-                          const TextStyle(
-                            color: AppColors
-                                .textSecondary,
-
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const Icon(
-                    Icons
-                        .chevron_right_rounded,
-
-                    color: AppColors
-                        .textSecondary,
-                  ),
-                ],
-              ),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

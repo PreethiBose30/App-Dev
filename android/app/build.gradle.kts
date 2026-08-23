@@ -18,6 +18,10 @@ plugins {
 android {
     namespace = "com.example.digital_inventory" // Matches your package namespace
     compileSdk = flutter.compileSdkVersion
+    // jni (a transitive dep of google_mlkit_text_recognition) requires a newer
+    // NDK than the Flutter default; without pinning this, Gradle just warns
+    // and silently uses the older NDK, which the plugin isn't actually built for.
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         // 🛠️ CRITICAL FIX: Enables Java 8+ API desugaring for local notifications package

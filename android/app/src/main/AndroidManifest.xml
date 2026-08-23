@@ -1,4 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Flutter's debug/profile manifests get this injected automatically,
+         which is why network calls "just work" in dev builds even without
+         it here; the release build only reads this file, though, so
+         without it explicitly declared, every API call in a release APK fails. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+ requires this to be requested at runtime before any
+         notification (including scheduled warranty reminders) can show. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:label="digital_inventory"
         android:name="${applicationName}"
