@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../dashboard/add_product_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final String extractedText;
@@ -94,6 +95,33 @@ class ResultScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
+
+            if (extractedText.isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddProductScreen(initialNotes: extractedText),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFF4F4F0),
+                    side: const BorderSide(color: Color(0xFF555555)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text(
+                    'USE AS NEW PRODUCT NOTES',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1),
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 12),
 
             SizedBox(
               width: double.infinity,
