@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../models/product.dart';
-import '../../services/asset_service.dart';
+import '../../services/asset_repository.dart';
 import '../../services/api_client.dart';
 import '../../services/notification_service.dart';
 
@@ -33,7 +32,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
   late DateTime? _purchaseDate = widget.existing?.purchaseDate;
   late DateTime? _serviceDate = widget.existing?.serviceDate;
 
-  String? _documentPath;
   late bool _reminderEnabled = widget.existing?.reminderEnabled ?? false;
   bool _isSaving = false;
 
@@ -81,19 +79,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  Future<void> _pickDocument() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    );
-
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        _documentPath = result.files.single.path;
-      });
-    }
-  }
-
   Future<void> _saveProduct() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -121,16 +106,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         reminderEnabled: _reminderEnabled,
       );
 
-      Product saved = _isEditing
-          ? await AssetService.updateAsset(widget.existing!.id!, product)
-          : await AssetService.createAsset(product);
-
-      // The document itself is a separate multipart request that can only
-      // happen once the asset has an id -- for a brand-new item that's only
-      // true after the create call above.
-      if (_documentPath != null) {
-        saved = await AssetService.uploadDocument(saved.id!, _documentPath!);
-      }
+      final Product saved = _isEditing
+          ? await AssetRepository.updateAsset(widget.existing!.id!, product)
+          : await AssetRepository.createAsset(product);
 
       // warrantyExpiry is server-computed, so the reminder can only be
       // scheduled correctly against the saved copy, not the local one built
@@ -286,29 +264,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 date: _serviceDate,
                 onTap: () => _pickDate(isPurchaseDate: false),
               ),
-              const SizedBox(height: 14),
-              InkWell(
-                onTap: _pickDocument,
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
+              if (_isEditing) ...[
+                const SizedBox(height: 14),
+                Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(color: const Color(0xFF161616), borderRadius: BorderRadius.circular(16)),
-                  child: Row(
+                  child: const Row(
                     children: [
-                      const Icon(Icons.upload_file_outlined, color: Color(0xFFF4F4F0)),
-                      const SizedBox(width: 14),
+                      Icon(Icons.folder_outlined, color: Color(0xFF7A7A7A), size: 18),
+                      SizedBox(width: 14),
                       Expanded(
                         child: Text(
-                          _documentPath != null
-                              ? 'DOCUMENT SELECTED'
-                              : (widget.existing?.imagePath != null ? 'DOCUMENT ON FILE' : 'UPLOAD BILL OR WARRANTY DOCUMENT'),
-                          style: const TextStyle(color: Color(0xFFB0B0B0), fontSize: 12, fontWeight: FontWeight.w600),
+                          'Scanned bills and warranty cards are managed from the Files tab on this product',
+                          style: TextStyle(color: Color(0xFF7A7A7A), fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+              ],
               const SizedBox(height: 14),
               SwitchListTile(
                 value: _reminderEnabled,

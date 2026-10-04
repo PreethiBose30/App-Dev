@@ -9,7 +9,7 @@ import 'categories_screen.dart';
 import 'chatbot_tab.dart';
 import 'profile_screen.dart';
 import '../../models/product.dart';
-import '../../services/asset_service.dart';
+import '../../services/asset_repository.dart';
 import '../../services/auth_service.dart';
 import '../../services/api_client.dart';
 import '../../services/dashboard_service.dart';
@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final products = await AssetService.getAssets();
+      final products = await AssetRepository.getAssets();
 
       // Re-sync reminders against the full list every time it loads (not
       // just at create/edit time) -- local notifications live on-device, so

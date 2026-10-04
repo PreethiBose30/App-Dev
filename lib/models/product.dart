@@ -1,6 +1,7 @@
 // Mirrors the backend's Asset document (see backend/src/models/Asset.js).
-// This is a plain data class -- all persistence goes through AssetService,
-// which talks to the API. Nothing here touches a database directly.
+// This is a plain data class -- persistence goes through AssetRepository
+// (API when reachable, Hive cache otherwise). Documents are a separate
+// collection now (see RemoteDocument/LocalDocument), not fields here.
 class Product {
   final String? id;
   final String name;
@@ -14,16 +15,7 @@ class Product {
   final DateTime? emiDueDate;
   final DateTime? serviceDate;
   final String? notes;
-  // Server-side filename once a document has been uploaded (see
-  // AssetService.uploadDocument) -- never a client-local file path; the
-  // backend rejects imagePath in create/update bodies and only sets it via
-  // the dedicated upload endpoint.
-  final String? imagePath;
-  final String? documentOriginalName;
-  final String? documentMimeType;
   final bool reminderEnabled;
-
-  bool get hasDocument => imagePath != null;
 
   Product({
     this.id,
@@ -38,9 +30,6 @@ class Product {
     this.emiDueDate,
     this.serviceDate,
     this.notes,
-    this.imagePath,
-    this.documentOriginalName,
-    this.documentMimeType,
     this.reminderEnabled = false,
   });
 
@@ -69,9 +58,6 @@ class Product {
       emiDueDate: _parseDate(json['emiDueDate']),
       serviceDate: _parseDate(json['serviceDate']),
       notes: json['notes'] as String?,
-      imagePath: json['imagePath'] as String?,
-      documentOriginalName: json['documentOriginalName'] as String?,
-      documentMimeType: json['documentMimeType'] as String?,
       reminderEnabled: json['reminderEnabled'] as bool? ?? false,
     );
   }

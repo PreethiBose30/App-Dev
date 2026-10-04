@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/product.dart';
-import '../../services/asset_service.dart';
+import '../../services/asset_repository.dart';
 import '../../services/api_client.dart';
 import '../products/product_detail_screen.dart';
 
@@ -31,7 +31,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       _errorMessage = null;
     });
     try {
-      final result = await AssetService.getAssets(category: widget.categoryName);
+      final result = await AssetRepository.getAssets(category: widget.categoryName);
       if (!mounted) return;
       setState(() {
         categoryProducts = result;

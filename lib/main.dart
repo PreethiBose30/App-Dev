@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'screens/splash/splash_screen.dart';
 import 'services/notification_service.dart';
+import 'services/hive_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/sync_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await HiveService.init();
   await NotificationService.init();
+  ConnectivityService.start();
+  SyncService.startAutoSync();
   runApp(const MyApp());
 }
 

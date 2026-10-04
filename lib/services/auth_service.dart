@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/app_user.dart';
 import 'api_client.dart';
+import 'hive_service.dart';
 
 /// Everything auth-related: register, login, session persistence, logout.
 /// The JWT and last-known user are cached in secure storage so the app can
@@ -63,5 +64,6 @@ class AuthService {
     await ApiClient.clearToken();
     await _storage.delete(key: _userKey);
     _cachedUser = null;
+    await HiveService.clearAssetCache();
   }
 }

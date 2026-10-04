@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/product.dart';
-import '../../services/asset_service.dart';
+import '../../services/asset_repository.dart';
 import '../../services/api_client.dart';
 import 'product_detail_screen.dart';
 
@@ -39,7 +39,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       _errorMessage = null;
     });
     try {
-      final result = await AssetService.getAssets(search: search);
+      final result = await AssetRepository.getAssets(search: search);
       if (!mounted) return;
       setState(() {
         products = result;
