@@ -36,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen>
     Timer(const Duration(seconds: 2), _resumeSession);
   }
 
-  // If a JWT is already stored and still valid against the backend, skip
+  // If a Firebase session exists and the backend accepts its token, skip
   // straight to the dashboard; otherwise land on login. Either way this is
   // a real API call (GET /auth/me), not a local guess about session state.
   Future<void> _resumeSession() async {

@@ -1,13 +1,13 @@
 # Digital Vault API
 
-Stack: **FastAPI + Motor (async MongoDB driver)**. Ported from an earlier Node/Express version — the API contract below is unchanged, so the Flutter app needed zero changes for this migration.
+Stack: **FastAPI + Motor (async MongoDB driver)**. Ported from an earlier Node/Express version — the API contract below is unchanged, so the Flutter app needed zero changes for that migration. Sign-in has since moved to Firebase Authentication (see Auth).
 
 Base URL: `http://localhost:5000/api/v1` (health check lives at `/api/health`, outside `v1`).
 
 All request/response bodies are JSON. Protected routes require:
 
 ```
-Authorization: Bearer <JWT>
+Authorization: Bearer <Firebase ID token>
 ```
 
 Domain note: this is a **personal** vault, not a shared team inventory. Every
@@ -17,11 +17,23 @@ system stats (`/admin/stats`).
 
 ## Auth
 
+Sign-up, sign-in, passwords and password reset are handled by **Firebase Authentication**, not by this API. The app signs in with Firebase and sends the resulting **ID token** as the Bearer token on every request (the Firebase SDK refreshes it hourly). The API verifies the token's signature, expiry and project with the Firebase Admin SDK.
+
+On a person's first authenticated request the API creates their MongoDB user record (name from the token, email lowercased, matched by Firebase uid). That record's id owns all of their products and documents.
+
 | Method | Endpoint | Auth | Body | Notes |
 |---|---|---|---|---|
-| POST | `/auth/register` | none | `{ name, email, password }` | `role` always defaults to `user`; cannot self-assign `admin`. Rate-limited (30/15min per IP). |
-| POST | `/auth/login` | none | `{ email, password }` | Returns `{ token, user }`. Rate-limited. |
-| GET | `/auth/me` | Bearer | — | Returns the current user (no password). |
+| GET | `/auth/me` | Bearer | � | Returns `{ id, name, email, role }`; creates the record on first call. |
+| PUT | `/auth/me` | Bearer | `{ name }` | Updates your own name. Role can never be changed here. |
+
+**Admin role.** `role` is `admin` only if the Firebase token carries the custom claim `admin: true`. That claim can only be set with the service-account key:
+
+```bash
+python make_admin.py you@example.com            # grant
+python make_admin.py you@example.com --remove   # revoke
+```
+
+The person must sign out and in again (or wait up to an hour) for the claim to appear in their token.
 
 ## Assets (the user's vaulted items)
 
@@ -56,7 +68,7 @@ An asset can have **any number** of documents attached (a receipt, a warranty ca
 
 This is what lets the Flutter app capture a document offline, save it locally, and safely retry the upload as many times as it needs to once connectivity returns.
 
-Files are stored on disk under `backend_python/uploads/<userId>/<randomly-generated-name>.<ext>` -- the on-disk name is unrelated to `localId` or the original filename (recorded separately as `storedFilename` on the document, an internal detail the API never exposes).
+Files are stored on disk under `backend/uploads/<userId>/<randomly-generated-name>.<ext>` -- the on-disk name is unrelated to `localId` or the original filename (recorded separately as `storedFilename` on the document, an internal detail the API never exposes).
 
 ## Dashboard
 
@@ -79,12 +91,11 @@ Validation failures (422) additionally include `"errors": [...]` (FastAPI's Pyda
 | Status | Meaning |
 |---|---|
 | 400 | Malformed request (e.g. invalid ObjectId, wrong file type) |
-| 401 | Missing/invalid credentials, or missing JWT |
-| 403 | Valid JWT but insufficient role, or accessing another user's asset/document |
+| 401 | Missing, invalid or expired Firebase token |
+| 403 | Valid token but insufficient role, or accessing another user's asset/document |
 | 404 | Resource / route not found |
-| 409 | Duplicate (e.g. email already registered) |
+| 409 | Duplicate |
 | 422 | Request body failed validation |
-| 429 | Rate limit exceeded (auth endpoints only) |
 | 500 | Unexpected server error (no stack trace is ever returned to the client) |
 
 ## Interactive docs
@@ -93,5 +104,39 @@ FastAPI auto-generates OpenAPI docs at `/docs` (Swagger UI) and `/redoc` while t
 
 ## Known limitations
 
-- Document storage is local disk (`backend_python/uploads/`), not cloud object storage (S3/Cloudinary etc.) — fine for a single-instance deployment, but won't survive a stateless/multi-instance production setup without adding that later. Docker Compose mounts it as a named volume so it survives container restarts.
+- Document storage is local disk (`backend/uploads/`), not cloud object storage (S3/Cloudinary etc.) — fine for a single-instance deployment, but won't survive a stateless/multi-instance production setup without adding that later. Docker Compose mounts it as a named volume so it survives container restarts.
 - OCR (Google ML Kit) runs entirely on-device in Flutter; extracted text is not sent to or stored by the backend.
+
+## Running with Docker
+
+Requires Docker Desktop (Windows/Mac) or Docker Engine. Run everything from `backend/`.
+
+```bash
+# first time only
+copy .env.example .env          # then set MONGO_URI if using Atlas
+# and save your Firebase service-account key as backend/firebase-service-account.json
+
+docker compose up -d --build    # build the image and start api + mongo
+docker compose ps               # both should say (healthy)
+docker compose logs -f api      # watch the API log (Ctrl+C stops watching, not the app)
+docker compose down             # stop and remove containers, KEEP all data
+```
+
+- API: `http://localhost:5000` (docs at `/docs`, health at `/api/health`).
+- **Which database?** If `backend/.env` sets `MONGO_URI` (e.g. Atlas), the API uses it and the `mongo` container sits unused. If it is empty, the API uses the `mongo` container. To force the local container for one run: `MONGO_URI=mongodb://mongo:27017/digital_vault docker compose up -d` (PowerShell: `$env:MONGO_URI="mongodb://mongo:27017/digital_vault"; docker compose up -d`).
+- If `MONGO_URI` is set but wrong (bad password, Atlas network access), the API refuses to start and logs why. It never falls back to a throwaway database when one is configured.
+- The Firebase key is mounted into the container as a Docker secret (`/run/secrets/firebase_key`), never copied into the image.
+- MongoDB is deliberately **not** published to your PC (no port 27017). Only the `api` container can reach it.
+
+### Where the data lives
+
+| Data | Docker volume | Survives `restart` | Survives `down` + `up` | Survives rebuild |
+| --- | --- | --- | --- | --- |
+| Database (users, products, document records) | `backend_mongo-data` | yes | yes | yes |
+| Uploaded document files | `backend_uploads-data` | yes | yes | yes |
+
+Only `docker compose down -v` (note the `-v`) deletes the volumes, and with them all data. To reset on purpose: `docker compose down -v`.
+
+### Tested
+
+Build, start, health check, Firebase-token auth (auto-created user, ownership 403s, admin claim, 8 concurrent first requests -> one record), create a product, upload and download a PDF, `restart`, `down` + `up`, and rebuild with `--force-recreate` all kept the data. A retried upload with the same `localId` returned the original document, not a duplicate. The image contains no `.env` and no virtualenv, and runs as a non-root user.

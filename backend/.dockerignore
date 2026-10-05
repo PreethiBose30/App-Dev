@@ -1,0 +1,18 @@
+# Keep secrets, local state and junk OUT of the image. Without this,
+# `COPY . .` would bake the real .env (database password) and
+# the local virtualenv into the image.
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+__pycache__/
+*.pyc
+uploads/
+*.log
+.git
+.gitignore
+firebase-service-account*.json
+Dockerfile
+docker-compose.yml
+.dockerignore

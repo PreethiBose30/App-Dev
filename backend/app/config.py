@@ -4,12 +4,13 @@ from dotenv import load_dotenv
 
 # Resolve .env relative to this package, not the process's cwd, so
 # `uvicorn app.main:app` works the same whether it's launched from the
-# repo root or from inside backend_python/.
+# repo root or from inside backend/.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 MONGO_URI = os.getenv("MONGO_URI", "")
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-only-secret-change-me")
-JWT_EXPIRES_DAYS = int(os.getenv("JWT_EXPIRES_DAYS", "30"))
+# Firebase service-account key (see app/firebase.py). Relative paths resolve
+# against backend/.
+FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS", "firebase-service-account.json")
 PORT = int(os.getenv("PORT", "5000"))
 FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 

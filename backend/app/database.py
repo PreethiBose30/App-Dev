@@ -66,19 +66,30 @@ async def connect_db() -> None:
             print(f"MongoDB connected: {client.address}")
             await _ensure_indexes()
             return
-    else:
-        print("MONGO_URI not set.")
+        # A database address WAS configured but the connection failed (wrong
+        # password, Atlas network access, server down). Never fall back to
+        # the throwaway database here: that silently hides the real problem
+        # and every account and product would vanish on the next restart.
+        # Failing loudly is the only safe behaviour.
+        raise RuntimeError(
+            "MONGO_URI is set but the database could not be reached (see the "
+            "'Could not connect' line above). Check the username and password "
+            "in backend/.env, that Atlas Network Access allows your IP, and "
+            "that the cluster is running. Not starting with a throwaway "
+            "database, because your data would be lost on restart."
+        )
 
+    print("MONGO_URI not set.")
     print(
         "Falling back to a local throwaway MongoDB instance for development. "
         "Data will NOT persist between restarts -- set MONGO_URI in "
-        "backend_python/.env to use a real database."
+        "backend/.env to use a real database."
     )
     mongod_path = _find_mongod()
     if not mongod_path:
         raise RuntimeError(
             "No MONGO_URI set and no local mongod binary found. "
-            "Set MONGO_URI in backend_python/.env (e.g. a MongoDB Atlas connection "
+            "Set MONGO_URI in backend/.env (e.g. a MongoDB Atlas connection "
             "string), or install MongoDB locally."
         )
 
@@ -109,7 +120,21 @@ async def _ensure_indexes() -> None:
     # localId) pair can only ever map to one document, which is what
     # actually guarantees a retried upload never creates a duplicate.
     await db.documents.create_index([("user", 1), ("localId", 1)], unique=True)
-    await db.users.create_index("email", unique=True)
+    # Identity is the Firebase uid now. Email is no longer unique here: the
+    # old unique email index belonged to the self-run login system, and
+    # Firebase already guarantees one account per email.
+    try:
+        await db.users.drop_index("email_1")
+    except Exception:  # noqa: BLE001 -- index absent (fresh database) or already dropped
+        pass
+    await db.users.create_index("email")
+    # Partial rather than sparse-unique: legacy users from the old login
+    # system have no firebaseUid and must not collide with each other.
+    await db.users.create_index(
+        "firebaseUid",
+        unique=True,
+        partialFilterExpression={"firebaseUid": {"$type": "string"}},
+    )
 
 
 def close_db() -> None:

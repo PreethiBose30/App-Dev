@@ -1,9 +1,11 @@
-"""Development seed data. Run with: python seed.py
-Wipes and repopulates users + assets with demo accounts and sample items."""
+"""Adds sample products to an EXISTING account (never wipes anything).
+Sign up in the app first, then run:  python seed.py you@example.com
+Accounts themselves live in Firebase -- there are no demo passwords."""
 import asyncio
-from datetime import datetime, timedelta, timezone
+import sys
+from datetime import datetime, timezone
 
-from app import database, security
+from app import database
 from app.routers.assets import _compute_warranty_expiry
 
 
@@ -15,35 +17,17 @@ def months_ago(n: int) -> datetime:
     return d.replace(year=year, month=month)
 
 
-async def run():
+async def run(email: str):
     await database.connect_db()
     db = database.db
 
-    await db.users.delete_many({})
-    await db.assets.delete_many({})
-    await db.documents.delete_many({})
-
+    user = await db.users.find_one({"email": email.lower()})
+    if not user:
+        print(f"No user with email {email}. Sign up in the app (and make one authenticated request) first.")
+        database.close_db()
+        sys.exit(1)
+    user_id = user["_id"]
     now = datetime.now(timezone.utc)
-
-    admin_result = await db.users.insert_one(
-        {
-            "name": "Admin Demo",
-            "email": "admin@digitalvault.dev",
-            "password": security.hash_password("Admin@123"),
-            "role": "admin",
-            "createdAt": now,
-        }
-    )
-    user_result = await db.users.insert_one(
-        {
-            "name": "Preethi Demo",
-            "email": "user@digitalvault.dev",
-            "password": security.hash_password("User@123"),
-            "role": "user",
-            "createdAt": now,
-        }
-    )
-    user_id = user_result.inserted_id
 
     assets = [
         {
@@ -98,20 +82,16 @@ async def run():
             "updatedAt": now,
         },
     ]
-    # insert_one (not insert_many) with the computation applied here so
-    # each asset gets the exact same warrantyExpiry logic the real POST
-    # /assets route uses -- insert_many bypassed that entirely on the
-    # first pass, silently leaving every seeded asset without one.
     for asset in assets:
         _compute_warranty_expiry(asset)
         await db.assets.insert_one(asset)
 
-    print("Seed complete.")
-    print("Demo credentials:")
-    print("  admin: admin@digitalvault.dev / Admin@123")
-    print("  user:  user@digitalvault.dev / User@123")
+    print(f"Added {len(assets)} sample products to {email}.")
     database.close_db()
 
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    if len(sys.argv) != 2:
+        print("Usage: python seed.py <email-of-existing-user>")
+        sys.exit(2)
+    asyncio.run(run(sys.argv[1]))

@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  # 1. FastAPI API Container
+  # FastAPI backend
   api:
     build: .
     ports:
@@ -10,26 +8,42 @@ services:
       - .env
     environment:
       - PORT=5000
+      # Defaults to the mongo container below. If backend/.env sets
+      # MONGO_URI (e.g. a MongoDB Atlas address) that wins, and the mongo
+      # container simply sits unused.
       - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/digital_vault}
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in backend_python/.env}
-      - JWT_EXPIRES_DAYS=${JWT_EXPIRES_DAYS:-30}
+      # The Firebase key is mounted as a secret at /run/secrets/firebase_key,
+      # never copied into the image.
+      - FIREBASE_CREDENTIALS=/run/secrets/firebase_key
+    secrets:
+      - firebase_key
     volumes:
-      # Uploaded documents would otherwise live only in the container's
-      # writable layer and vanish on rebuild/recreate.
+      # Uploaded documents live here, not in the container's writable layer,
+      # so they survive restarts, rebuilds and `docker compose down`.
       - uploads-data:/usr/src/app/uploads
     depends_on:
-      - mongo
-    restart: always
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
 
-  # 2. NoSQL Database Container (MongoDB) -- used unless MONGO_URI in .env
-  # points elsewhere (e.g. a MongoDB Atlas cluster).
+  # MongoDB. Not published to the host: only the api container needs it,
+  # and leaving 27017 open on your PC would expose an unauthenticated
+  # database to anything on your network.
   mongo:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
+    image: mongo:7
     volumes:
       - mongo-data:/data/db
-    restart: always
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+secrets:
+  firebase_key:
+    file: ./firebase-service-account.json
 
 volumes:
   mongo-data:

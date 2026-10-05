@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Thrown for any non-2xx API response. [statusCode] lets callers branch on
 /// 401/403/404/409/422 etc. without parsing the message string.
@@ -16,7 +16,7 @@ class ApiException implements Exception {
 }
 
 /// Centralized HTTP client: every screen/service goes through here so the
-/// API base URL and JWT attachment live in exactly one place (per the
+/// API base URL and ID-token attachment live in exactly one place (per the
 /// project's API-first architecture requirement -- no component talks to
 /// the backend directly with a raw http.get/post call of its own).
 ///
@@ -32,12 +32,24 @@ class ApiClient {
     defaultValue: _defaultBaseUrl,
   );
 
-  static const _storage = FlutterSecureStorage();
-  static const _tokenKey = 'auth_token';
-
-  static Future<void> saveToken(String token) => _storage.write(key: _tokenKey, value: token);
-  static Future<String?> getToken() => _storage.read(key: _tokenKey);
-  static Future<void> clearToken() => _storage.delete(key: _tokenKey);
+  /// The signed-in user's Firebase ID token. Firebase caches it and silently
+  /// refreshes it shortly before it expires (they last an hour), so there is
+  /// no token to store or renew by hand. Null when nobody is signed in.
+  /// Throws a network ApiException if a needed refresh could not reach
+  /// Firebase: that is "offline", not "logged out", and callers must be able
+  /// to tell the difference.
+  static Future<String?> getToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    try {
+      return await user.getIdToken();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'network-request-failed') {
+        throw ApiException(0, 'Could not reach the server. Check your connection.');
+      }
+      return null; // e.g. account disabled or deleted: treated as signed out
+    }
+  }
 
   /// A real reachability check, not just "does the device have a network
   /// interface up" -- a phone can be on Wi-Fi with no route to this
