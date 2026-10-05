@@ -17,10 +17,26 @@ class _ScanScreenState extends State<ScanScreen> {
 
   bool _isProcessing = false;
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? image;
+    try {
+      image = await _picker.pickImage(source: source);
+    } catch (e) {
+      // Covers permission denied/permanently denied and camera-unavailable
+      // -- image_picker surfaces all of these as exceptions, so this is
+      // what keeps a denied permission from crashing the app.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            source == ImageSource.camera
+                ? 'Could not open the camera. Check that camera permission is granted in Settings.'
+                : 'Could not open the gallery. Check that photo access is granted in Settings.',
+          ),
+        ),
+      );
+      return;
+    }
 
     if (image == null) return;
 
@@ -155,16 +171,16 @@ class _ScanScreenState extends State<ScanScreen> {
               width: double.infinity,
 
               child: ElevatedButton.icon(
-                onPressed: _isProcessing ? null : _pickImage,
+                onPressed: _isProcessing ? null : () => _pickImage(ImageSource.camera),
 
                 icon: const Icon(
-                  Icons.upload_file,
+                  Icons.camera_alt_outlined,
                 ),
 
                 label: Text(
                   _isProcessing
                       ? 'PROCESSING...'
-                      : 'SCAN DOCUMENT',
+                      : 'SCAN WITH CAMERA',
                 ),
 
                 style: ElevatedButton.styleFrom(
@@ -173,6 +189,40 @@ class _ScanScreenState extends State<ScanScreen> {
                   padding: const EdgeInsets.symmetric(
                     vertical: 18,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            SizedBox(
+              width: double.infinity,
+
+              child: OutlinedButton.icon(
+                onPressed: _isProcessing ? null : () => _pickImage(ImageSource.gallery),
+
+                icon: const Icon(
+                  Icons.photo_library_outlined,
+                ),
+
+                label: const Text(
+                  'SCAN FROM GALLERY',
+                ),
+
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFF4F4F0),
+
+                  side: const BorderSide(
+                    color: Color(0xFF555555),
+                  ),
+
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                  ),
+
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

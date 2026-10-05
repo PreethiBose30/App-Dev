@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/app_user.dart';
 import 'api_client.dart';
+import 'hive_service.dart';
 
 /// Everything auth-related: register, login, session persistence, logout.
 /// The JWT and last-known user are cached in secure storage so the app can
@@ -59,9 +60,21 @@ class AuthService {
     }
   }
 
+  /// Updates the signed-in user's name on the backend, then refreshes both
+  /// the in-memory cache and secure storage so Home/Profile reflect it
+  /// immediately without the user having to log out and back in.
+  static Future<AppUser> updateProfile({required String name}) async {
+    final data = await ApiClient.put('/auth/me', body: {'name': name});
+    final user = AppUser.fromJson(data as Map<String, dynamic>);
+    _cachedUser = user;
+    await _storage.write(key: _userKey, value: jsonEncode(data));
+    return user;
+  }
+
   static Future<void> logout() async {
     await ApiClient.clearToken();
     await _storage.delete(key: _userKey);
     _cachedUser = null;
+    await HiveService.clearAssetCache();
   }
 }

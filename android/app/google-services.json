@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "301273450763",
+    "project_id": "digital-inventory-e58a8",
+    "storage_bucket": "digital-inventory-e58a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:301273450763:android:7dd0d80d7633e2e1827a0e",
+        "android_client_info": {
+          "package_name": "com.example.digital_inventory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCirX1kjh0sxZk0jFGl5SHjBMG9rEVCw4o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

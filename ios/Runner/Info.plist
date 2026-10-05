@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Digital Inventory uses the camera to scan bills, warranty cards, and other documents for your vault.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Digital Inventory uses your photo library so you can attach an existing photo as a scanned document.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Thrown for any non-2xx API response. [statusCode] lets callers branch on
@@ -37,6 +38,20 @@ class ApiClient {
   static Future<void> saveToken(String token) => _storage.write(key: _tokenKey, value: token);
   static Future<String?> getToken() => _storage.read(key: _tokenKey);
   static Future<void> clearToken() => _storage.delete(key: _tokenKey);
+
+  /// A real reachability check, not just "does the device have a network
+  /// interface up" -- a phone can be on Wi-Fi with no route to this
+  /// specific backend (captive portal, VPN, server down, wrong LAN). Short
+  /// timeout so a dead server doesn't hang whatever's waiting on this.
+  static Future<bool> pingBackend() async {
+    try {
+      final healthUrl = Uri.parse(baseUrl).replace(path: '/api/health');
+      final response = await http.get(healthUrl).timeout(const Duration(seconds: 4));
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static Future<Map<String, String>> _headers({bool withAuth = true}) async {
     final headers = {'Content-Type': 'application/json'};
@@ -129,12 +144,29 @@ class ApiClient {
   /// file, so this is the one place a request is built differently. Still
   /// goes through the same base URL, auth header, and error handling as
   /// everything else.
-  static Future<dynamic> uploadFile(String path, {required String filePath, required String fieldName}) async {
+  static Future<dynamic> uploadFile(
+    String path, {
+    required String filePath,
+    required String fieldName,
+    Map<String, String>? fields,
+    String? contentType,
+  }) async {
     try {
       final request = http.MultipartRequest('POST', _uri(path));
       final token = await getToken();
       if (token != null) request.headers['Authorization'] = 'Bearer $token';
-      request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+      if (fields != null) request.fields.addAll(fields);
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fieldName,
+          filePath,
+          // Without this, MultipartFile.fromPath defaults to
+          // application/octet-stream, which the backend's upload
+          // validation always rejects -- every document upload failed
+          // with 400 until this was threaded through from the caller.
+          contentType: contentType == null ? null : MediaType.parse(contentType),
+        ),
+      );
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);

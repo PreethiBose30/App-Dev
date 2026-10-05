@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. Express API Container
+  # 1. FastAPI API Container
   api:
     build: .
     ports:
@@ -11,8 +11,8 @@ services:
     environment:
       - PORT=5000
       - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/digital_vault}
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in backend/.env}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-30d}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in backend_python/.env}
+      - JWT_EXPIRES_DAYS=${JWT_EXPIRES_DAYS:-30}
     volumes:
       # Uploaded documents would otherwise live only in the container's
       # writable layer and vanish on rebuild/recreate.

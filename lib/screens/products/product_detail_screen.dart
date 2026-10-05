@@ -1,12 +1,20 @@
-import 'dart:typed_data';
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 import '../../models/product.dart';
-import '../../services/asset_service.dart';
+import '../../models/local_document.dart';
+import '../../services/asset_repository.dart';
 import '../../services/api_client.dart';
+import '../../services/document_repository.dart';
+import '../../services/document_service.dart';
+import '../../services/connectivity_service.dart';
+import '../../services/sync_service.dart';
 import '../../services/recent_service.dart';
 import '../../services/notification_service.dart';
 import '../dashboard/add_product_screen.dart';
+import '../scanner/document_capture_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -21,21 +29,49 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ThemeAwareState {
   late TabController _tabController;
   bool _isDeleting = false;
-  bool _isDocumentBusy = false;
+  List<LocalDocument> _documents = [];
+  StreamSubscription? _syncSub;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadDocuments();
+    // Sync-status badges (pending/uploading/synced/failed) should update
+    // on their own once a background sync pass touches this asset's
+    // documents, without the user having to leave and re-enter the screen.
+    _syncSub = SyncService.onSyncEvent.listen((_) => _loadDocuments());
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _syncSub?.cancel();
     super.dispose();
+  }
+
+  void _loadDocuments() {
+    if (!mounted || widget.product.id == null) return;
+    setState(() => _documents = DocumentRepository.documentsForAsset(widget.product.id!));
+    _refreshFromServer();
+  }
+
+  /// Reconciles documents uploaded from another device into the local
+  /// list. Silently does nothing when offline -- the local/cached list
+  /// from Hive is already showing, this is purely additive.
+  Future<void> _refreshFromServer() async {
+    if (widget.product.id == null || !ConnectivityService.isOnline) return;
+    try {
+      final remoteDocs = await DocumentService.listForAsset(widget.product.id!);
+      await DocumentRepository.mergeRemoteDocuments(widget.product.id!, remoteDocs);
+      if (!mounted) return;
+      setState(() => _documents = DocumentRepository.documentsForAsset(widget.product.id!));
+    } on ApiException {
+      // Stay with whatever the local cache already has.
+    }
   }
 
   String formatDate(DateTime? date) {
@@ -73,10 +109,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete product?', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text('Delete product?', style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           'This will permanently remove "${widget.product.name}" from your vault.',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
@@ -92,7 +128,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
     setState(() => _isDeleting = true);
     try {
-      await AssetService.deleteAsset(widget.product.id!);
+      await AssetRepository.deleteAsset(widget.product.id!);
       await NotificationService.cancelReminder(widget.product.id!);
       if (!mounted) return;
       Navigator.pop(context, true);
@@ -101,6 +137,73 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       setState(() => _isDeleting = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not delete: ${e.message}')));
     }
+  }
+
+  Future<void> _addDocument() async {
+    final doc = await Navigator.push<LocalDocument>(
+      context,
+      MaterialPageRoute(builder: (context) => DocumentCaptureScreen(assetId: widget.product.id!)),
+    );
+    if (doc != null) _loadDocuments();
+  }
+
+  Future<void> _viewDocument(LocalDocument doc) async {
+    try {
+      final file = await DocumentRepository.ensureLocalFile(doc);
+      if (file == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This document has not finished syncing yet -- try again once you are online.')),
+        );
+        return;
+      }
+      RecentService.addRecent(doc.filename, 'File', widget.product.name);
+      if (!mounted) return;
+
+      if (doc.mimeType.startsWith('image/')) {
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => _ImageViewerScreen(file: file)));
+      } else {
+        final bytes = await file.length();
+        if (!mounted) return;
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text('Document available offline', style: TextStyle(color: AppColors.textPrimary)),
+            content: Text(
+              '${doc.filename} (${(bytes / 1024).toStringAsFixed(0)} KB) is saved on this device.\n\n'
+              'In-app PDF preview isn\'t built yet -- this confirms the file is really stored locally and can be opened even without internet.',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open document: $e')));
+    }
+  }
+
+  Future<void> _deleteDocument(LocalDocument doc) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Remove document?', style: TextStyle(color: AppColors.textPrimary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('REMOVE', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await DocumentRepository.deleteDocument(doc);
+    _loadDocuments();
   }
 
   @override
@@ -113,13 +216,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Product Details', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        title: Text('Product Details', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
+            icon: Icon(Icons.edit_outlined, color: AppColors.textPrimary),
             onPressed: _isDeleting ? null : _editProduct,
           ),
           IconButton(
@@ -156,7 +259,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     color: AppColors.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 35),
+                  child: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 35),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -165,10 +268,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     children: [
                       Text(
                         product.name,
-                        style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
+                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       const SizedBox(height: 6),
-                      Text(product.category, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -235,7 +338,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Product Information',
               style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -268,7 +371,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Warranty Status',
               style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -308,62 +411,134 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   }
 
   Widget _buildFilesTab() {
-    if (!widget.product.hasDocument) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.folder_open_outlined, color: AppColors.textSecondary, size: 50),
-            SizedBox(height: 14),
-            Text('No documents added', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-            SizedBox(height: 6),
-            Text(
-              'Bills and warranty files will appear here',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: widget.product.id == null ? null : _addDocument,
+              icon: const Icon(Icons.add),
+              label: const Text('ADD DOCUMENT'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
             ),
-          ],
+          ),
         ),
-      );
+        Expanded(
+          child: _documents.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.folder_open_outlined, color: AppColors.textSecondary, size: 50),
+                      SizedBox(height: 14),
+                      Text('No documents added', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                      SizedBox(height: 6),
+                      Text(
+                        'Bills and warranty files will appear here',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                  itemCount: _documents.length,
+                  itemBuilder: (context, index) => _documentTile(_documents[index]),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _documentTile(LocalDocument doc) {
+    final isImage = doc.mimeType.startsWith('image/');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+            child: Icon(isImage ? Icons.image_outlined : Icons.picture_as_pdf_outlined, color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: InkWell(
+              onTap: () => _viewDocument(doc),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doc.filename,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  const SizedBox(height: 4),
+                  _syncBadge(doc.syncStatus),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+            onPressed: () => _deleteDocument(doc),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _syncBadge(DocumentSyncStatus status) {
+    late final String label;
+    late final Color color;
+    late final IconData icon;
+
+    switch (status) {
+      case DocumentSyncStatus.synced:
+        label = 'Synced';
+        color = Colors.green;
+        icon = Icons.check_circle_outline;
+        break;
+      case DocumentSyncStatus.uploading:
+        label = 'Syncing…';
+        color = AppColors.primary;
+        icon = Icons.sync;
+        break;
+      case DocumentSyncStatus.pending:
+        label = 'Pending';
+        color = Colors.orangeAccent;
+        icon = Icons.schedule;
+        break;
+      case DocumentSyncStatus.failed:
+        label = 'Sync failed';
+        color = Colors.redAccent;
+        icon = Icons.error_outline;
+        break;
+      case DocumentSyncStatus.deleted:
+        label = 'Deleting…';
+        color = AppColors.textSecondary;
+        icon = Icons.delete_outline;
+        break;
     }
 
-    final displayName = widget.product.documentOriginalName ?? widget.product.imagePath!;
-    final isImage = widget.product.documentMimeType?.startsWith('image/') ?? false;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(isImage ? Icons.image_outlined : Icons.picture_as_pdf_outlined, color: AppColors.primary, size: 50),
-            const SizedBox(height: 14),
-            Text(
-              displayName,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                OutlinedButton(
-                  onPressed: _isDocumentBusy ? null : _viewDocument,
-                  style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary),
-                  child: _isDocumentBusy
-                      ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('VIEW'),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton(
-                  onPressed: _isDocumentBusy ? null : _removeDocument,
-                  style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent),
-                  child: const Text('REMOVE'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 13),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 
@@ -373,88 +548,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           const SizedBox(height: 5),
-          Text(value, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+          Text(value, style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
         ],
       ),
     );
-  }
-
-  Future<void> _viewDocument() async {
-    setState(() => _isDocumentBusy = true);
-    try {
-      final bytes = await AssetService.getDocumentBytes(widget.product.id!);
-      RecentService.addRecent(
-        widget.product.documentOriginalName ?? widget.product.imagePath!,
-        'File',
-        widget.product.name,
-      );
-      if (!mounted) return;
-
-      final isImage = widget.product.documentMimeType?.startsWith('image/') ?? false;
-      if (isImage) {
-        await Navigator.push(context, MaterialPageRoute(builder: (context) => _ImageViewerScreen(bytes: bytes)));
-      } else {
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: const Text('Document retrieved', style: TextStyle(color: AppColors.textPrimary)),
-            content: Text(
-              '${widget.product.documentOriginalName ?? "Document"} '
-              '(${(bytes.length / 1024).toStringAsFixed(0)} KB) was downloaded from the server successfully.\n\n'
-              'In-app PDF preview isn\'t built yet -- this confirms the file is really stored and retrievable.',
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-          ),
-        );
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open document: ${e.message}')));
-    } finally {
-      if (mounted) setState(() => _isDocumentBusy = false);
-    }
-  }
-
-  Future<void> _removeDocument() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Remove document?', style: TextStyle(color: AppColors.textPrimary)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('REMOVE', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
-    setState(() => _isDocumentBusy = true);
-    try {
-      await AssetService.deleteDocument(widget.product.id!);
-      if (!mounted) return;
-      // The document fields on widget.product (immutable, passed in by the
-      // caller) are now stale -- bubble the change up the same way edit/
-      // delete do, so whoever opened this screen re-fetches.
-      Navigator.pop(context, true);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _isDocumentBusy = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not remove document: ${e.message}')));
-    }
   }
 }
 
 class _ImageViewerScreen extends StatelessWidget {
-  final Uint8List bytes;
-  const _ImageViewerScreen({required this.bytes});
+  final File file;
+  const _ImageViewerScreen({required this.file});
 
   @override
   Widget build(BuildContext context) {
@@ -464,7 +569,7 @@ class _ImageViewerScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Center(child: InteractiveViewer(child: Image.memory(bytes))),
+      body: Center(child: InteractiveViewer(child: Image.file(file))),
     );
   }
 }

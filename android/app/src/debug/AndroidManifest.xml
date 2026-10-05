@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug builds only: Android 9+ blocks plain http:// by default, which
+         would stop the app reaching a dev backend at http://10.0.2.2:5000 or
+         http://<pc-ip>:5000. Release builds should talk to an https:// backend
+         instead, so this is deliberately NOT in the main manifest. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

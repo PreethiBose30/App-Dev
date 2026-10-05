@@ -8,6 +8,15 @@
          notification (including scheduled warranty reminders) can show. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- For document/warranty-card scanning (image_picker's camera source).
+         Gallery/file access needs no explicit permission here; image_picker
+         and file_picker each merge in what they need (scoped storage /
+         READ_MEDIA_IMAGES on Android 13+) via their own plugin manifests. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- required="false" so the app still installs and runs (gallery/file
+         upload as a fallback) on a device with no camera at all. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <application
         android:label="digital_inventory"
         android:name="${applicationName}"

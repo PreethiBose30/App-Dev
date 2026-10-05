@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 import '../../models/product.dart';
-import '../../services/asset_service.dart';
+import '../../services/asset_repository.dart';
 import '../../services/api_client.dart';
 import '../products/product_detail_screen.dart';
 
@@ -14,7 +15,7 @@ class CategoryProductsScreen extends StatefulWidget {
   State<CategoryProductsScreen> createState() => _CategoryProductsScreenState();
 }
 
-class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
+class _CategoryProductsScreenState extends State<CategoryProductsScreen> with ThemeAwareState {
   List<Product> categoryProducts = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -31,7 +32,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       _errorMessage = null;
     });
     try {
-      final result = await AssetService.getAssets(category: widget.categoryName);
+      final result = await AssetRepository.getAssets(category: widget.categoryName);
       if (!mounted) return;
       setState(() {
         categoryProducts = result;
@@ -53,10 +54,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
         title: Text(
           widget.categoryName.toUpperCase(),
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.5),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.5),
         ),
       ),
       body: _buildBody(),
@@ -65,7 +66,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
     if (_errorMessage != null) {
@@ -75,7 +76,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
             const SizedBox(height: 12),
-            Text(_errorMessage!, style: const TextStyle(color: AppColors.textPrimary)),
+            Text(_errorMessage!, style: TextStyle(color: AppColors.textPrimary)),
             const SizedBox(height: 12),
             TextButton(onPressed: loadCategoryProducts, child: const Text('RETRY')),
           ],
@@ -88,14 +89,14 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.inventory_2_outlined, color: AppColors.textSecondary, size: 48),
+            Icon(Icons.inventory_2_outlined, color: AppColors.textSecondary, size: 48),
             const SizedBox(height: 16),
             Text(
               'No products in ${widget.categoryName}',
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Add a product to see it here',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
@@ -135,7 +136,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     color: AppColors.primary.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 26),
+                  child: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 26),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -146,14 +147,14 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         product.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 5),
-                      Text(product.category, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
               ],
             ),
           ),

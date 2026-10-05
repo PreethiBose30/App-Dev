@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 import '../../models/product.dart';
-import '../../services/asset_service.dart';
+import '../../services/asset_repository.dart';
 import '../../services/api_client.dart';
 import 'category_products_screen.dart';
 
@@ -12,7 +13,7 @@ class CategoriesScreen extends StatefulWidget {
   State<CategoriesScreen> createState() => _CategoriesScreenState();
 }
 
-class _CategoriesScreenState extends State<CategoriesScreen> {
+class _CategoriesScreenState extends State<CategoriesScreen> with ThemeAwareState {
   // Kept in sync with AddProductScreen's category dropdown -- these two
   // lists used to diverge (Electronics/Appliances/Documents/Furniture here
   // vs Phone/Laptop/TV/Car/Appliance/Furniture/Other there), which meant
@@ -44,7 +45,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       _errorMessage = null;
     });
     try {
-      final result = await AssetService.getAssets();
+      final result = await AssetRepository.getAssets();
       if (!mounted) return;
       setState(() {
         products = result;
@@ -72,13 +73,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'CATEGORIES',
           style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.5),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _errorMessage != null
               ? Center(
                   child: Column(
@@ -86,7 +87,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     children: [
                       const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
                       const SizedBox(height: 12),
-                      Text(_errorMessage!, style: const TextStyle(color: AppColors.textPrimary)),
+                      Text(_errorMessage!, style: TextStyle(color: AppColors.textPrimary)),
                       const SizedBox(height: 12),
                       TextButton(onPressed: loadProducts, child: const Text('RETRY')),
                     ],
@@ -132,12 +133,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               const Spacer(),
                               Text(
                                 categoryName,
-                                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 productCount == 1 ? '1 product' : '$productCount products',
-                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                               ),
                             ],
                           ),
