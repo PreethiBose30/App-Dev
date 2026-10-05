@@ -1,3 +1,12 @@
 node_modules/
 .env
 *.log
+
+# Flutter / Dart generated
+build/
+.dart_tool/
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+*.iml
