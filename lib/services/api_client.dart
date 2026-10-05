@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Thrown for any non-2xx API response. [statusCode] lets callers branch on
@@ -148,13 +149,24 @@ class ApiClient {
     required String filePath,
     required String fieldName,
     Map<String, String>? fields,
+    String? contentType,
   }) async {
     try {
       final request = http.MultipartRequest('POST', _uri(path));
       final token = await getToken();
       if (token != null) request.headers['Authorization'] = 'Bearer $token';
       if (fields != null) request.fields.addAll(fields);
-      request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fieldName,
+          filePath,
+          // Without this, MultipartFile.fromPath defaults to
+          // application/octet-stream, which the backend's upload
+          // validation always rejects -- every document upload failed
+          // with 400 until this was threaded through from the caller.
+          contentType: contentType == null ? null : MediaType.parse(contentType),
+        ),
+      );
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);

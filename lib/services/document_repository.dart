@@ -24,7 +24,18 @@ class DocumentRepository {
   /// upload happens in the background (now, if online; later, once
   /// connectivity returns) so the caller never has to wait on the network
   /// to consider the capture "done".
-  static Future<LocalDocument> captureDocument({required String assetId, required File pickedFile, required String mimeType}) async {
+  ///
+  /// [label], when given, is stored as the document's filename (extension
+  /// preserved) instead of the picked file's original name -- e.g. the
+  /// add-product form's optional "Warranty card"/"Invoice" slots use this
+  /// so the Files tab shows what each document is, without adding a new
+  /// Hive field (and the build_runner regen that would require).
+  static Future<LocalDocument> captureDocument({
+    required String assetId,
+    required File pickedFile,
+    required String mimeType,
+    String? label,
+  }) async {
     final userId = AuthService.cachedUser!.id;
     final localId = _uuid.v4();
     final bytes = await pickedFile.readAsBytes();
@@ -39,7 +50,7 @@ class DocumentRepository {
     final doc = LocalDocument(
       localId: localId,
       assetId: assetId,
-      filename: p.basename(pickedFile.path),
+      filename: label == null ? p.basename(pickedFile.path) : '$label$ext',
       mimeType: mimeType,
       fileSizeBytes: bytes.length,
       localFilePath: storedFile.path,

@@ -5,3 +5,4 @@ uploads/
 *.log
 venv/
 .venv/
+firebase-service-account*.json

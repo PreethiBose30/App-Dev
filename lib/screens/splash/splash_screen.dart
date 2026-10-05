@@ -73,14 +73,14 @@ class _SplashScreenState extends State<SplashScreen>
                   color: AppColors.primary.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.inventory_2_outlined,
                   size: 70,
                   color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 25),
-              const Text(
+              Text(
                 "Digital Inventory",
                 style: TextStyle(
                   color: AppColors.textPrimary,
@@ -89,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "Organize. Track. Access.",
                 style: TextStyle(
                   color: AppColors.textSecondary,

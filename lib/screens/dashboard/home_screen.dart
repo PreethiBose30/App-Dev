@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 import '../products/product_detail_screen.dart';
 import '../products/products_screen.dart';
 import '../../utils/page_route.dart';
@@ -22,7 +23,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
   int currentIndex = 0;
   List<Product> recentProducts = [];
   DashboardStats? _stats;
@@ -104,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
 
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.accent,
         onPressed: () async {
           await Navigator.push(
             context,
@@ -115,9 +116,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
           loadProducts();
         },
-        child: const Icon(
+        child: Icon(
           Icons.add,
-          color: Colors.black,
+          color: AppColors.onAccent,
         ),
       ),
 
@@ -154,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedItemColor: AppColors.primary,
+          selectedItemColor: AppColors.accent,
           unselectedItemColor: AppColors.textSecondary,
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,
@@ -172,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           "Digital Inventory",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
@@ -229,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           shape: BoxShape.circle,
                           color: AppColors.primary.withOpacity(.15),
                         ),
-                        child: const Icon(Icons.folder_copy_outlined, color: AppColors.primary, size: 34),
+                        child: Icon(Icons.folder_copy_outlined, color: AppColors.primary, size: 34),
                       ),
                     ],
                   ),
@@ -264,15 +265,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: AppColors.textSecondary),
+                      Icon(Icons.search, color: AppColors.textSecondary),
                       const SizedBox(width: 16),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
                           onSubmitted: _runSearch,
                           textInputAction: TextInputAction.search,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                          decoration: const InputDecoration(
+                          style: TextStyle(color: AppColors.textPrimary),
+                          decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: "Search products...",
                             hintStyle: TextStyle(color: AppColors.textSecondary),
@@ -290,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
 
                 if (_isLoading)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
                     child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
                   )
@@ -306,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 10),
                         TextButton(onPressed: loadProducts, child: const Text('RETRY')),
@@ -318,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                     decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
-                    child: const Column(
+                    child: Column(
                       children: [
                         Icon(Icons.inventory_2_outlined, color: AppColors.textSecondary, size: 30),
                         SizedBox(height: 10),
@@ -351,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
+                      side: BorderSide(color: AppColors.primary),
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
@@ -378,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: AppColors.primary.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(title, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+      child: Text(title, style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -398,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
           ),
         ],
       ),
@@ -426,20 +427,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: AppColors.primary.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.inventory_2_outlined, color: AppColors.primary),
+              child: Icon(Icons.inventory_2_outlined, color: AppColors.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                  Text(product.name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text(product.category, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
           ],
         ),
       ),

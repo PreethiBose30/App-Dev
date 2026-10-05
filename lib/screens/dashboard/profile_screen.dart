@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import 'appearance_settings_screen.dart';
+import 'edit_profile_screen.dart';
+import 'notification_settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
   Future<void> _logout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Log out?', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text('Log out?', style: TextStyle(color: AppColors.textPrimary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
           TextButton(
@@ -34,6 +44,32 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _editProfile() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen()));
+    if (mounted) setState(() {}); // Pick up the name AuthService just refreshed.
+  }
+
+  Future<void> _showAbout() async {
+    String version = '';
+    try {
+      final info = await PackageInfo.fromPlatform();
+      version = '${info.version}+${info.buildNumber}';
+    } catch (_) {
+      version = 'unavailable';
+    }
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Digital Inventory', style: TextStyle(color: AppColors.textPrimary)),
+        content: Text('Version $version', style: TextStyle(color: AppColors.textSecondary)),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = AuthService.cachedUser;
@@ -45,7 +81,7 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
 
-        title: const Text(
+        title: Text(
           'PROFILE',
           style: TextStyle(
             color: AppColors.textPrimary,
@@ -83,14 +119,14 @@ class ProfileScreen extends StatelessWidget {
                       width: 64,
                       height: 64,
 
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
                         shape: BoxShape.circle,
                       ),
 
-                      child: const Icon(
+                      child: Icon(
                         Icons.person_outline,
-                        color: Colors.black,
+                        color: AppColors.onAccent,
                         size: 32,
                       ),
                     ),
@@ -103,7 +139,7 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         Text(
                           user?.name ?? 'Unknown user',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -114,7 +150,7 @@ class ProfileScreen extends StatelessWidget {
 
                         Text(
                           user?.email ?? '',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -128,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
                               color: AppColors.primary.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
+                            child: Text(
                               'ADMIN',
                               style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1),
                             ),
@@ -142,7 +178,7 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              const Text(
+              Text(
                 'ACCOUNT',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -158,26 +194,26 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.person_outline,
                 title: 'Edit Profile',
                 subtitle: 'Update your personal information',
-                onTap: () {},
+                onTap: _editProfile,
               ),
 
               _ProfileOption(
                 icon: Icons.notifications_none_outlined,
                 title: 'Notifications',
                 subtitle: 'Manage your reminder preferences',
-                onTap: () {},
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen())),
               ),
 
               _ProfileOption(
                 icon: Icons.palette_outlined,
                 title: 'Appearance',
                 subtitle: 'Customize your app experience',
-                onTap: () {},
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AppearanceSettingsScreen())),
               ),
 
               const SizedBox(height: 24),
 
-              const Text(
+              Text(
                 'ABOUT',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -193,7 +229,7 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.info_outline,
                 title: 'About Digital Inventory',
                 subtitle: 'App information and version',
-                onTap: () {},
+                onTap: _showAbout,
               ),
 
               const SizedBox(height: 30),
@@ -274,7 +310,7 @@ class _ProfileOption extends StatelessWidget {
       title: Text(
         title,
 
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -284,13 +320,13 @@ class _ProfileOption extends StatelessWidget {
       subtitle: Text(
         subtitle,
 
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.textSecondary,
           fontSize: 11,
         ),
       ),
 
-      trailing: const Icon(
+      trailing: Icon(
         Icons.chevron_right,
         color: AppColors.textSecondary,
       ),

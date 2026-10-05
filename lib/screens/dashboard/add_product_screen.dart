@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import '../../models/product.dart';
 import '../../services/asset_repository.dart';
 import '../../services/api_client.dart';
+import '../../services/document_picker.dart';
+import '../../services/document_repository.dart';
 import '../../services/notification_service.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
+import '../../widgets/document_slot_field.dart';
 
 class AddProductScreen extends StatefulWidget {
   /// When non-null, the screen edits this product (PUT) instead of creating
@@ -19,7 +24,7 @@ class AddProductScreen extends StatefulWidget {
   State<AddProductScreen> createState() => _AddProductScreenState();
 }
 
-class _AddProductScreenState extends State<AddProductScreen> {
+class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareState {
   late final _nameController = TextEditingController(text: widget.existing?.name ?? '');
   late final _brandController = TextEditingController(text: widget.existing?.brand ?? '');
   late final _modelController = TextEditingController(text: widget.existing?.modelNumber ?? '');
@@ -34,6 +39,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   late bool _reminderEnabled = widget.existing?.reminderEnabled ?? false;
   bool _isSaving = false;
+
+  // Optional document slots -- only offered when creating a new product
+  // (editing manages documents from the product's Files tab instead).
+  PickedDocument? _warrantyCardDoc;
+  PickedDocument? _invoiceDoc;
 
   bool get _isEditing => widget.existing != null;
 
@@ -56,11 +66,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFFF4F4F0),
-              onPrimary: Color(0xFF0D0D0D),
-              surface: Color(0xFF1A1A1A),
-              onSurface: Color(0xFFF4F4F0),
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.accent,
+              onPrimary: AppColors.onAccent,
+              surface: AppColors.surface,
+              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -110,6 +120,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ? await AssetRepository.updateAsset(widget.existing!.id!, product)
           : await AssetRepository.createAsset(product);
 
+      // The product has no id until this point, so the optional document
+      // slots can only be saved now -- never before create succeeds, and
+      // never more than once (there's no retry here on top of this call).
+      final failedDocLabels = await _saveOptionalDocuments(saved.id!);
+
       // warrantyExpiry is server-computed, so the reminder can only be
       // scheduled correctly against the saved copy, not the local one built
       // above.
@@ -117,9 +132,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isEditing ? 'Product updated successfully' : 'Product saved successfully')),
-      );
+      final baseMessage = _isEditing ? 'Product updated successfully' : 'Product saved successfully';
+      final message = failedDocLabels.isEmpty
+          ? baseMessage
+          : "$baseMessage, but the ${failedDocLabels.join(' and ')} couldn't be saved";
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
       Navigator.pop(context, true);
     } on ApiException catch (e) {
@@ -130,6 +148,43 @@ class _AddProductScreenState extends State<AddProductScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  /// Saves whichever optional document slots were filled in, against the
+  /// now-existing [assetId]. Each slot is independent -- one failing never
+  /// stops the other, and never costs the product record itself (it's
+  /// already saved by the time this runs). Returns the labels that failed,
+  /// so the caller can fold that into one snackbar message.
+  Future<List<String>> _saveOptionalDocuments(String assetId) async {
+    final failed = <String>[];
+
+    if (_warrantyCardDoc != null) {
+      try {
+        await DocumentRepository.captureDocument(
+          assetId: assetId,
+          pickedFile: _warrantyCardDoc!.file,
+          mimeType: _warrantyCardDoc!.mimeType,
+          label: 'Warranty card',
+        );
+      } catch (_) {
+        failed.add('warranty card');
+      }
+    }
+
+    if (_invoiceDoc != null) {
+      try {
+        await DocumentRepository.captureDocument(
+          assetId: assetId,
+          pickedFile: _invoiceDoc!.file,
+          mimeType: _invoiceDoc!.mimeType,
+          label: 'Invoice',
+        );
+      } catch (_) {
+        failed.add('invoice');
+      }
+    }
+
+    return failed;
   }
 
   @override
@@ -151,12 +206,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Color(0xFFF4F4F0)),
+      style: TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF8A8A8A), fontSize: 11, letterSpacing: 0.8),
+        labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 0.8),
         enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF383838))),
-        focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFF4F4F0))),
+        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.accent)),
       ),
     );
   }
@@ -167,15 +222,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: const Color(0xFF161616), borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
         child: Row(
           children: [
-            const Icon(Icons.calendar_month_outlined, color: Color(0xFFF4F4F0)),
+            Icon(Icons.calendar_month_outlined, color: AppColors.textPrimary),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 date == null ? title : '$title: ${date.day}/${date.month}/${date.year}',
-                style: const TextStyle(color: Color(0xFFB0B0B0), fontSize: 12, fontWeight: FontWeight.w600),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -187,14 +242,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFFF4F4F0)),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
         title: Text(
           _isEditing ? 'EDIT PRODUCT' : 'ADD PRODUCT',
-          style: const TextStyle(color: Color(0xFFF4F4F0)),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
       ),
       body: SafeArea(
@@ -205,28 +260,28 @@ class _AddProductScreenState extends State<AddProductScreen> {
             children: [
               Text(
                 _isEditing ? 'UPDATE ASSET RECORD' : 'NEW ASSET RECORD',
-                style: const TextStyle(color: Color(0xFFF4F4F0), fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 2),
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 2),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Enter the product details below',
-                style: TextStyle(color: Color(0xFF7A7A7A), fontSize: 13),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(24)),
+                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(24)),
                 child: Column(
                   children: [
                     _textField(controller: _nameController, label: 'PRODUCT NAME'),
                     const SizedBox(height: 18),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
-                      dropdownColor: const Color(0xFF1A1A1A),
-                      style: const TextStyle(color: Color(0xFFF4F4F0)),
-                      decoration: const InputDecoration(
+                      dropdownColor: AppColors.surface,
+                      style: TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
                         labelText: 'CATEGORY',
-                        labelStyle: TextStyle(color: Color(0xFF8A8A8A), fontSize: 11),
+                        labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11),
                       ),
                       items: _categories.map((category) {
                         return DropdownMenuItem(value: category, child: Text(category));
@@ -268,33 +323,48 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(color: const Color(0xFF161616), borderRadius: BorderRadius.circular(16)),
-                  child: const Row(
+                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+                  child: Row(
                     children: [
-                      Icon(Icons.folder_outlined, color: Color(0xFF7A7A7A), size: 18),
-                      SizedBox(width: 14),
+                      Icon(Icons.folder_outlined, color: AppColors.textSecondary, size: 18),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Text(
                           'Scanned bills and warranty cards are managed from the Files tab on this product',
-                          style: TextStyle(color: Color(0xFF7A7A7A), fontSize: 12, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
                   ),
+                ),
+              ] else ...[
+                const SizedBox(height: 14),
+                DocumentSlotField(
+                  label: 'Warranty card (optional)',
+                  value: _warrantyCardDoc,
+                  enabled: !_isSaving,
+                  onChanged: (doc) => setState(() => _warrantyCardDoc = doc),
+                ),
+                const SizedBox(height: 14),
+                DocumentSlotField(
+                  label: 'Invoice (optional)',
+                  value: _invoiceDoc,
+                  enabled: !_isSaving,
+                  onChanged: (doc) => setState(() => _invoiceDoc = doc),
                 ),
               ],
               const SizedBox(height: 14),
               SwitchListTile(
                 value: _reminderEnabled,
                 onChanged: (value) => setState(() => _reminderEnabled = value),
-                activeColor: const Color(0xFFF4F4F0),
-                title: const Text(
+                activeColor: AppColors.accent,
+                title: Text(
                   'WARRANTY EXPIRY REMINDER',
-                  style: TextStyle(color: Color(0xFFF4F4F0), fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
-                subtitle: const Text(
+                subtitle: Text(
                   'Get notified before the warranty expires',
-                  style: TextStyle(color: Color(0xFF7A7A7A), fontSize: 11),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
                 ),
                 contentPadding: EdgeInsets.zero,
               ),
@@ -302,8 +372,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ElevatedButton(
                 onPressed: _isSaving ? null : _saveProduct,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF4F4F0),
-                  foregroundColor: const Color(0xFF0D0D0D),
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),

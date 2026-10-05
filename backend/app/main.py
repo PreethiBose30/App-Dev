@@ -55,7 +55,12 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"message": "Validation failed", "errors": exc.errors()})
+    # exc.errors() can include a 'ctx' dict holding the raw exception object
+    # from a @field_validator's `raise ValueError(...)` (e.g. RegisterRequest/
+    # UpdateProfileRequest's name check) -- that's not JSON-serializable, so
+    # it's dropped rather than passed straight to json.dumps.
+    errors = [{k: v for k, v in err.items() if k != "ctx"} for err in exc.errors()]
+    return JSONResponse(status_code=422, content={"message": "Validation failed", "errors": errors})
 
 
 @app.exception_handler(Exception)

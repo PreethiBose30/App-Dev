@@ -93,6 +93,7 @@ class SyncService {
         assetId: doc.assetId,
         localId: doc.localId,
         filePath: file.path,
+        mimeType: doc.mimeType,
         checksum: doc.checksum,
       );
       doc.serverId = remote.id;

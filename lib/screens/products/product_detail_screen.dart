@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 import '../../models/product.dart';
 import '../../models/local_document.dart';
 import '../../services/asset_repository.dart';
@@ -28,7 +29,7 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ThemeAwareState {
   late TabController _tabController;
   bool _isDeleting = false;
   List<LocalDocument> _documents = [];
@@ -108,10 +109,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete product?', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text('Delete product?', style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           'This will permanently remove "${widget.product.name}" from your vault.',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
@@ -168,11 +169,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: AppColors.surface,
-            title: const Text('Document available offline', style: TextStyle(color: AppColors.textPrimary)),
+            title: Text('Document available offline', style: TextStyle(color: AppColors.textPrimary)),
             content: Text(
               '${doc.filename} (${(bytes / 1024).toStringAsFixed(0)} KB) is saved on this device.\n\n'
               'In-app PDF preview isn\'t built yet -- this confirms the file is really stored locally and can be opened even without internet.',
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
             actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
           ),
@@ -189,7 +190,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Remove document?', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text('Remove document?', style: TextStyle(color: AppColors.textPrimary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
           TextButton(
@@ -215,13 +216,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Product Details', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        title: Text('Product Details', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
+            icon: Icon(Icons.edit_outlined, color: AppColors.textPrimary),
             onPressed: _isDeleting ? null : _editProduct,
           ),
           IconButton(
@@ -258,7 +259,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     color: AppColors.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 35),
+                  child: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 35),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -267,10 +268,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     children: [
                       Text(
                         product.name,
-                        style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
+                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       const SizedBox(height: 6),
-                      Text(product.category, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -337,7 +338,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Product Information',
               style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -370,7 +371,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Warranty Status',
               style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -422,7 +423,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               label: const Text('ADD DOCUMENT'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                side: BorderSide(color: AppColors.primary),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
@@ -431,7 +432,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         ),
         Expanded(
           child: _documents.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -481,7 +482,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     doc.filename,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13),
+                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   _syncBadge(doc.syncStatus),
@@ -547,9 +548,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           const SizedBox(height: 5),
-          Text(value, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+          Text(value, style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
         ],
       ),
     );

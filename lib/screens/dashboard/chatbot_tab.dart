@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 
 class ChatbotTab extends StatelessWidget {
   const ChatbotTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // AnimatedBuilder (rather than the ThemeAwareState mixin used by the
+    // stateful screens) since this widget has no State to attach a
+    // listener to -- it still needs to repaint when Appearance changes
+    // while it's sitting underneath another route.
+    return AnimatedBuilder(
+      animation: ThemeController.instance,
+      builder: (context, _) => _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
 
@@ -13,7 +25,7 @@ class ChatbotTab extends StatelessWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
 
-        title: const Text(
+        title: Text(
           'INVENTORY ASSISTANT',
           style: TextStyle(
             color: AppColors.textPrimary,
@@ -58,7 +70,7 @@ class ChatbotTab extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
 
-                        child: const Icon(
+                        child: Icon(
                           Icons.chat_bubble_outline,
                           color: AppColors.primary,
                           size: 32,
@@ -67,7 +79,7 @@ class ChatbotTab extends StatelessWidget {
 
                       const SizedBox(height: 20),
 
-                      const Text(
+                      Text(
                         'How can I help?',
                         style: TextStyle(
                           color: AppColors.textPrimary,
@@ -78,7 +90,7 @@ class ChatbotTab extends StatelessWidget {
 
                       const SizedBox(height: 8),
 
-                      const Text(
+                      Text(
                         'Ask about your products, warranties, '
                             'reminders, or inventory.',
                         textAlign: TextAlign.center,
@@ -115,7 +127,7 @@ class ChatbotTab extends StatelessWidget {
                         ),
                       ),
 
-                      child: const TextField(
+                      child: TextField(
                         style: TextStyle(
                           color: AppColors.textPrimary,
                         ),
@@ -140,7 +152,7 @@ class ChatbotTab extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
 
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),

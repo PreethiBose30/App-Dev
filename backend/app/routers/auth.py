@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from .. import database, security
 from ..dependencies import CurrentUser, get_current_user
 from ..limiter import limiter
-from ..models.auth import LoginRequest, RegisterRequest
+from ..models.auth import LoginRequest, RegisterRequest, UpdateProfileRequest
 from ..utils import serialize_user
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -56,3 +56,22 @@ async def me(current: CurrentUser = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return serialize_user(user)
+
+
+# @route   PUT /api/v1/auth/me
+# @desc    Updates the current user's own name. Role is never accepted here
+#          -- there's no self-service way to change it.
+@router.put("/me")
+async def update_me(body: UpdateProfileRequest, current: CurrentUser = Depends(get_current_user)):
+    from bson import ObjectId
+
+    from pymongo import ReturnDocument
+
+    result = await database.db.users.find_one_and_update(
+        {"_id": ObjectId(current.id)},
+        {"$set": {"name": body.name}},
+        return_document=ReturnDocument.AFTER,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+    return serialize_user(result)
