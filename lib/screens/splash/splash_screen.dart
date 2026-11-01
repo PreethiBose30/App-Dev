@@ -67,18 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.inventory_2_outlined,
-                  size: 70,
-                  color: AppColors.primary,
-                ),
-              ),
+              Image.asset('assets/icon/app_icon_tile.png', width: 112, height: 112),
               const SizedBox(height: 25),
               Text(
                 "Digital Inventory",
