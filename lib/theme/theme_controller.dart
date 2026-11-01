@@ -24,7 +24,7 @@ mixin ThemeAwareState<T extends StatefulWidget> on State<T> {
   }
 }
 
-/// Holds the user's appearance preferences (theme mode + accent color) and
+/// Holds the user's appearance preference (theme mode) and
 /// notifies listeners so the UI updates live, with no restart needed.
 /// Persisted in the Hive settings box -- small non-sensitive key/value
 /// data, same box used for other app settings.
@@ -33,23 +33,10 @@ class ThemeController extends ChangeNotifier {
   static final ThemeController instance = ThemeController._();
 
   static const _modeKey = 'appearance_theme_mode';
-  static const _accentKey = 'appearance_accent_color';
 
-  /// Presets shown in the Appearance screen's accent picker.
-  static const List<Color> accentPresets = [
-    Color(0xFFF4F4F0), // default -- matches the app's original off-white
-    Color(0xFF4F8EF7), // blue
-    Color(0xFF34C759), // green
-    Color(0xFFFF9F0A), // orange
-    Color(0xFFBF5AF2), // purple
-    Color(0xFFFF375F), // pink/red
-  ];
-
-  ThemeMode _mode = ThemeMode.dark;
-  Color _accent = accentPresets.first;
+  ThemeMode _mode = ThemeMode.light;
 
   ThemeMode get mode => _mode;
-  Color get accent => _accent;
 
   /// Resolves [mode] against the platform brightness for ThemeMode.system.
   bool isDark(Brightness platformBrightness) {
@@ -68,23 +55,14 @@ class ThemeController extends ChangeNotifier {
     final storedMode = box.get(_modeKey) as String?;
     _mode = ThemeMode.values.firstWhere(
       (m) => m.name == storedMode,
-      orElse: () => ThemeMode.dark,
+      orElse: () => ThemeMode.light,
     );
-    final storedAccent = box.get(_accentKey) as int?;
-    _accent = storedAccent != null ? Color(storedAccent) : accentPresets.first;
   }
 
   Future<void> setMode(ThemeMode mode) async {
     if (_mode == mode) return;
     _mode = mode;
     await HiveService.settingsBox.put(_modeKey, mode.name);
-    notifyListeners();
-  }
-
-  Future<void> setAccent(Color color) async {
-    if (_accent.toARGB32() == color.toARGB32()) return;
-    _accent = color;
-    await HiveService.settingsBox.put(_accentKey, color.toARGB32());
     notifyListeners();
   }
 }

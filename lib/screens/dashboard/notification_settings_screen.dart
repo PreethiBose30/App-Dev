@@ -84,12 +84,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppColors.accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.zero,
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications_off_outlined, color: Colors.orangeAccent),
+                    Icon(Icons.notifications_off_outlined, color: AppColors.accent),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -102,7 +102,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 ),
               ),
             Container(
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
               child: SwitchListTile(
                 value: _remindersEnabled,
                 onChanged: _onToggleReminders,

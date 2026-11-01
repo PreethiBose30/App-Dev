@@ -6,6 +6,7 @@ import 'services/notification_service.dart';
 import 'services/hive_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/sync_service.dart';
+import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
 void main() async {
@@ -31,20 +32,8 @@ class MyApp extends StatelessWidget {
           title: 'Digital Inventory',
           debugShowCheckedModeBanner: false,
           themeMode: ThemeController.instance.mode,
-          theme: ThemeData.light().copyWith(
-            scaffoldBackgroundColor: const Color(0xFFF4F4F2),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: ThemeController.instance.accent,
-              brightness: Brightness.light,
-            ),
-          ),
-          darkTheme: ThemeData.dark().copyWith(
-            scaffoldBackgroundColor: const Color(0xFF0D0D0D),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: ThemeController.instance.accent,
-              brightness: Brightness.dark,
-            ),
-          ),
+          theme: AppTheme.build(Brightness.light),
+          darkTheme: AppTheme.build(Brightness.dark),
           home: const SplashScreen(),
         );
       },

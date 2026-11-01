@@ -71,7 +71,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with ThemeAwareSt
             children: [
               Container(
                 padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(24)),
+                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
                 child: Column(
                   children: [
                     TextFormField(
@@ -80,7 +80,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with ThemeAwareSt
                       decoration: InputDecoration(
                         labelText: 'NAME',
                         labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 0.8),
-                        enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF383838))),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.ruleSoft)),
                         focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.accent)),
                       ),
                     ),
@@ -92,7 +92,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with ThemeAwareSt
                       decoration: InputDecoration(
                         labelText: 'EMAIL',
                         labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 0.8),
-                        disabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2A2A2A))),
+                        disabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.surface)),
                       ),
                     ),
                   ],
@@ -100,7 +100,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with ThemeAwareSt
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 14),
-                Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                Text(_errorMessage!, style: TextStyle(color: AppColors.accent, fontSize: 12)),
               ],
               const SizedBox(height: 28),
               ElevatedButton(
@@ -109,7 +109,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> with ThemeAwareSt
                   backgroundColor: AppColors.accent,
                   foregroundColor: AppColors.onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                 ),
                 child: _isSaving
                     ? SizedBox(

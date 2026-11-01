@@ -97,7 +97,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.background,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
           ),
         ),
@@ -112,7 +112,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
               foregroundColor: AppColors.primary,
               side: BorderSide(color: AppColors.primary),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
           ),
         ),
@@ -125,9 +125,9 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
             label: const Text('CHOOSE FILE (PDF)'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textSecondary,
-              side: const BorderSide(color: Color(0xFF383838)),
+              side: BorderSide(color: AppColors.ruleSoft),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
           ),
         ),
@@ -143,7 +143,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
         Expanded(
           child: Container(
             width: double.infinity,
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
             clipBehavior: Clip.antiAlias,
             child: doc.isImage
                 ? Image.file(doc.file, fit: BoxFit.contain)
@@ -170,9 +170,9 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
                 onPressed: _isSaving ? null : _retake,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.textPrimary,
-                  side: const BorderSide(color: Color(0xFF383838)),
+                  side: BorderSide(color: AppColors.ruleSoft),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                 ),
                 child: const Text('RETAKE'),
               ),
@@ -182,10 +182,10 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
               child: OutlinedButton(
                 onPressed: _isSaving ? null : () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.redAccent,
-                  side: BorderSide(color: Colors.redAccent.withOpacity(0.4)),
+                  foregroundColor: AppColors.accent,
+                  side: BorderSide(color: AppColors.accent.withOpacity(0.4)),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                 ),
                 child: const Text('CANCEL'),
               ),
@@ -201,7 +201,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.background,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
             ),
             child: _isSaving
                 ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))

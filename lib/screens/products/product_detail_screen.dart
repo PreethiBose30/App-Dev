@@ -118,7 +118,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('DELETE', style: TextStyle(color: Colors.redAccent)),
+            child: Text('DELETE', style: TextStyle(color: AppColors.accent)),
           ),
         ],
       ),
@@ -195,7 +195,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('REMOVE', style: TextStyle(color: Colors.redAccent)),
+            child: Text('REMOVE', style: TextStyle(color: AppColors.accent)),
           ),
         ],
       ),
@@ -227,12 +227,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
           IconButton(
             icon: _isDeleting
-                ? const SizedBox(
+                ? SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
                   )
-                : const Icon(Icons.delete_outline, color: Colors.redAccent),
+                : Icon(Icons.delete_outline, color: AppColors.accent),
             onPressed: _isDeleting ? null : _deleteProduct,
           ),
         ],
@@ -248,7 +248,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.zero,
             ),
             child: Row(
               children: [
@@ -257,7 +257,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   width: 70,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.zero,
                   ),
                   child: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 35),
                 ),
@@ -277,7 +277,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: isWarrantyActive ? Colors.green.withOpacity(0.15) : Colors.red.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.zero,
                         ),
                         child: Text(
                           product.warrantyExpiry == null
@@ -300,7 +300,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
             child: TabBar(
               controller: _tabController,
               indicatorColor: AppColors.primary,
@@ -334,7 +334,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(22)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -367,7 +367,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(22)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -386,7 +386,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     : isWarrantyActive
                         ? Colors.green.withOpacity(0.15)
                         : Colors.red.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.zero,
               ),
               child: Text(
                 product.warrantyExpiry == null
@@ -425,7 +425,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 foregroundColor: AppColors.primary,
                 side: BorderSide(color: AppColors.primary),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
               ),
             ),
           ),
@@ -463,12 +463,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.12), borderRadius: BorderRadius.zero),
             child: Icon(isImage ? Icons.image_outlined : Icons.picture_as_pdf_outlined, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
@@ -491,7 +491,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+            icon: Icon(Icons.delete_outline, color: AppColors.accent, size: 20),
             onPressed: () => _deleteDocument(doc),
           ),
         ],
@@ -517,12 +517,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         break;
       case DocumentSyncStatus.pending:
         label = 'Pending';
-        color = Colors.orangeAccent;
+        color = AppColors.accent;
         icon = Icons.schedule;
         break;
       case DocumentSyncStatus.failed:
         label = 'Sync failed';
-        color = Colors.redAccent;
+        color = AppColors.accent;
         icon = Icons.error_outline;
         break;
       case DocumentSyncStatus.deleted:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'result_screen.dart';
 import '../dashboard/add_product_screen.dart';
@@ -93,18 +94,18 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppColors.background,
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        iconTheme: const IconThemeData(
-          color: Color(0xFFF4F4F0),
+        iconTheme: IconThemeData(
+          color: AppColors.textPrimary,
         ),
-        title: const Text(
+        title: Text(
           'ADD PRODUCT',
           style: TextStyle(
-            color: Color(0xFFF4F4F0),
+            color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.5,
@@ -123,20 +124,20 @@ class _ScanScreenState extends State<ScanScreen> {
               width: double.infinity,
               height: 250,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(28),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.zero,
                 border: Border.all(
                   color: Colors.white.withOpacity(0.08),
                 ),
               ),
 
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.document_scanner_outlined,
                     size: 70,
-                    color: Color(0xFFF4F4F0),
+                    color: AppColors.textPrimary,
                   ),
 
                   SizedBox(height: 20),
@@ -144,7 +145,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   Text(
                     'ADD A PRODUCT',
                     style: TextStyle(
-                      color: Color(0xFFF4F4F0),
+                      color: AppColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
@@ -157,7 +158,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     'Scan a document or enter details manually',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Color(0xFF7A7A7A),
+                      color: AppColors.textSecondary,
                       fontSize: 13,
                     ),
                   ),
@@ -184,13 +185,13 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
 
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF4F4F0),
-                  foregroundColor: const Color(0xFF0D0D0D),
+                  backgroundColor: AppColors.textPrimary,
+                  foregroundColor: AppColors.background,
                   padding: const EdgeInsets.symmetric(
                     vertical: 18,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
               ),
@@ -213,10 +214,10 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
 
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFF4F4F0),
+                  foregroundColor: AppColors.textPrimary,
 
-                  side: const BorderSide(
-                    color: Color(0xFF555555),
+                  side: BorderSide(
+                    color: AppColors.textSecondary,
                   ),
 
                   padding: const EdgeInsets.symmetric(
@@ -224,7 +225,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   ),
 
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
               ),
@@ -247,10 +248,10 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
 
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFF4F4F0),
+                  foregroundColor: AppColors.textPrimary,
 
-                  side: const BorderSide(
-                    color: Color(0xFF555555),
+                  side: BorderSide(
+                    color: AppColors.textSecondary,
                   ),
 
                   padding: const EdgeInsets.symmetric(
@@ -258,7 +259,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   ),
 
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
               ),
@@ -266,12 +267,12 @@ class _ScanScreenState extends State<ScanScreen> {
 
             const Spacer(),
 
-            const Text(
+            Text(
               'Scan bills, warranty cards, insurance papers, '
                   'or add product information manually.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF7A7A7A),
+                color: AppColors.textSecondary,
                 fontSize: 13,
                 height: 1.5,
               ),

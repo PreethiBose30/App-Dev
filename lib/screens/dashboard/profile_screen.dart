@@ -26,7 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('LOG OUT', style: TextStyle(color: Colors.redAccent)),
+            child: Text('LOG OUT', style: TextStyle(color: AppColors.accent)),
           ),
         ],
       ),
@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
 
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.zero,
 
                   border: Border.all(
                     color: Colors.white.withOpacity(0.05),
@@ -162,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.zero,
                             ),
                             child: Text(
                               'ADMIN',
@@ -248,10 +248,10 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
                   label: const Text('LOG OUT'),
 
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
+                    foregroundColor: AppColors.accent,
 
                     side: BorderSide(
-                      color: Colors.redAccent.withOpacity(0.4),
+                      color: AppColors.accent.withOpacity(0.4),
                     ),
 
                     padding: const EdgeInsets.symmetric(
@@ -259,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
                     ),
 
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.zero,
                     ),
                   ),
                 ),
@@ -297,7 +297,7 @@ class _ProfileOption extends StatelessWidget {
 
         decoration: BoxDecoration(
           color: AppColors.primary.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.zero,
         ),
 
         child: Icon(

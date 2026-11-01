@@ -37,7 +37,7 @@ class DocumentSlotField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -90,9 +90,9 @@ class DocumentSlotField extends StatelessWidget {
       onPressed: enabled ? onTap : null,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.textPrimary,
-        side: const BorderSide(color: Color(0xFF383838)),
+        side: BorderSide(color: AppColors.ruleSoft),
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -114,7 +114,7 @@ class DocumentSlotField extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             color: AppColors.primary.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.zero,
           ),
           clipBehavior: Clip.antiAlias,
           child: doc.isImage
@@ -137,7 +137,7 @@ class DocumentSlotField extends StatelessWidget {
         ),
         IconButton(
           tooltip: 'Remove',
-          icon: const Icon(Icons.close, color: Colors.redAccent, size: 20),
+          icon: Icon(Icons.close, color: AppColors.accent, size: 20),
           onPressed: enabled ? () => onChanged(null) : null,
         ),
       ],

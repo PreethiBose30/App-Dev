@@ -74,7 +74,7 @@ class _ProductsScreenState extends State<ProductsScreen> with ThemeAwareState {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
               child: TextField(
                 controller: _searchController,
                 onSubmitted: (value) => loadProducts(search: value.trim()),
@@ -108,7 +108,7 @@ class _ProductsScreenState extends State<ProductsScreen> with ThemeAwareState {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+            Icon(Icons.error_outline, color: AppColors.accent, size: 40),
             const SizedBox(height: 12),
             Text(_errorMessage!, style: TextStyle(color: AppColors.textPrimary)),
             const SizedBox(height: 12),
@@ -146,7 +146,7 @@ class _ProductsScreenState extends State<ProductsScreen> with ThemeAwareState {
         final Product product = products[index];
 
         return InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.zero,
           onTap: () async {
             await Navigator.push(
               context,
@@ -157,14 +157,14 @@ class _ProductsScreenState extends State<ProductsScreen> with ThemeAwareState {
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.zero,
                   ),
                   child: Icon(Icons.inventory_2_outlined, color: AppColors.primary),
                 ),

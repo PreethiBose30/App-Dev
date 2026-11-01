@@ -210,7 +210,7 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 0.8),
-        enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF383838))),
+        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.ruleSoft)),
         focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.accent)),
       ),
     );
@@ -219,10 +219,10 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
   Widget _dateTile({required String title, required DateTime? date, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.zero,
       child: Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
         child: Row(
           children: [
             Icon(Icons.calendar_month_outlined, color: AppColors.textPrimary),
@@ -270,7 +270,7 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(24)),
+                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
                 child: Column(
                   children: [
                     _textField(controller: _nameController, label: 'PRODUCT NAME'),
@@ -323,7 +323,7 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
                 const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
                   child: Row(
                     children: [
                       Icon(Icons.folder_outlined, color: AppColors.textSecondary, size: 18),
@@ -375,7 +375,7 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
                   backgroundColor: AppColors.accent,
                   foregroundColor: AppColors.onAccent,
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                 ),
                 child: Text(
                   _isSaving ? 'SAVING...' : (_isEditing ? 'UPDATE PRODUCT' : 'SAVE PRODUCT'),

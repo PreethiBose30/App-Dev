@@ -74,7 +74,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> with Th
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+            Icon(Icons.error_outline, color: AppColors.accent, size: 40),
             const SizedBox(height: 12),
             Text(_errorMessage!, style: TextStyle(color: AppColors.textPrimary)),
             const SizedBox(height: 12),
@@ -112,7 +112,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> with Th
         final Product product = categoryProducts[index];
 
         return InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.zero,
           onTap: () async {
             await Navigator.push(
               context,
@@ -125,7 +125,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> with Th
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.zero,
               border: Border.all(color: Colors.white.withOpacity(0.06)),
             ),
             child: Row(
@@ -134,7 +134,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> with Th
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.zero,
                   ),
                   child: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 26),
                 ),

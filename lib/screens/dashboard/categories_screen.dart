@@ -85,7 +85,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with ThemeAwareStat
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+                      Icon(Icons.error_outline, color: AppColors.accent, size: 40),
                       const SizedBox(height: 12),
                       Text(_errorMessage!, style: TextStyle(color: AppColors.textPrimary)),
                       const SizedBox(height: 12),
@@ -123,7 +123,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with ThemeAwareStat
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.zero,
                             border: Border.all(color: Colors.white.withOpacity(0.06)),
                           ),
                           child: Column(

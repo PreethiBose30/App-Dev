@@ -7,7 +7,6 @@ import '../products/products_screen.dart';
 import '../../utils/page_route.dart';
 import '../scanner/scan_screen.dart';
 import 'categories_screen.dart';
-import 'chatbot_tab.dart';
 import 'profile_screen.dart';
 import '../../models/product.dart';
 import '../../services/asset_repository.dart';
@@ -24,8 +23,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
-  int currentIndex = 0;
-  List<Product> recentProducts = [];
+  List<Product> _products = [];
   DashboardStats? _stats;
   bool _isLoading = true;
   String? _errorMessage;
@@ -59,8 +57,8 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
       // it shouldn't block or fail the screen if it errors.
       unawaited(NotificationService.syncAll(products));
 
-      // Stats aren't critical to the page -- if this call fails, still show
-      // the product list rather than blocking the whole screen on it.
+      // Stats aren't critical to the page -- if this call fails, the numbers
+      // are worked out from the product list instead (see _summary).
       DashboardStats? stats;
       try {
         stats = await DashboardService.getMyStats();
@@ -69,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
       }
       if (!mounted) return;
       setState(() {
-        recentProducts = products.take(3).toList();
+        _products = products;
         _stats = stats;
         _isLoading = false;
       });
@@ -92,321 +90,265 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
     );
   }
 
+  /// Server stats when we have them, otherwise the same numbers computed
+  /// from the (offline-cached) product list: expiring = within 30 days.
+  ({int total, double value, int expiring, int expired}) get _summary {
+    final s = _stats;
+    if (s != null) {
+      return (total: s.totalProducts, value: s.totalValue, expiring: s.expiringSoon, expired: s.expired);
+    }
+    final now = DateTime.now();
+    final soon = now.add(const Duration(days: 30));
+    var value = 0.0, expiring = 0, expired = 0;
+    for (final p in _products) {
+      value += p.price ?? 0;
+      final e = p.warrantyExpiry;
+      if (e == null) continue;
+      if (e.isBefore(now)) {
+        expired++;
+      } else if (e.isBefore(soon)) {
+        expiring++;
+      }
+    }
+    return (total: _products.length, value: value, expiring: expiring, expired: expired);
+  }
+
+  /// 81234 -> "81,234"; 1234567 -> "12,34,567" (Indian digit grouping).
+  static String _inr(num amount) {
+    final digits = amount.round().abs().toString();
+    if (digits.length <= 3) return '${amount < 0 ? '-' : ''}$digits';
+    final last3 = digits.substring(digits.length - 3);
+    var rest = digits.substring(0, digits.length - 3);
+    final parts = <String>[];
+    while (rest.length > 2) {
+      parts.insert(0, rest.substring(rest.length - 2));
+      rest = rest.substring(0, rest.length - 2);
+    }
+    if (rest.isNotEmpty) parts.insert(0, rest);
+    return '${amount < 0 ? '-' : ''}${parts.join(',')},$last3';
+  }
+
+  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  static String _warrantyLine(Product p) {
+    final e = p.warrantyExpiry;
+    final warranty = e == null ? 'No warranty' : 'Warranty to ${_months[e.month - 1]} ${e.year}';
+    return '${p.category} · $warranty';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final w = size.width;
-    final h = size.height;
-    final displayName = AuthService.cachedUser?.name ?? 'there';
-
-    const sectionGap = SizedBox(height: 24);
+    final firstName = (AuthService.cachedUser?.name ?? '').trim().split(' ').first;
+    final title = firstName.isEmpty ? 'Inventory' : 'Inventory — $firstName';
+    final summary = _summary;
+    final recent = _products.take(5).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.accent,
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ScanScreen(),
-            ),
-          );
-
-          loadProducts();
-        },
-        child: Icon(
-          Icons.add,
-          color: AppColors.onAccent,
-        ),
-      ),
-
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) async {
-            if (index == 1) {
-              await Navigator.push(context, FadeSlideRoute(page: const CategoriesScreen()));
-              loadProducts();
-            } else if (index == 2) {
-              Navigator.push(context, FadeSlideRoute(page: const ChatbotTab()));
-            } else if (index == 3) {
-              await Navigator.push(context, FadeSlideRoute(page: const ProfileScreen()));
-              loadProducts();
-            } else {
-              setState(() => currentIndex = index);
-            }
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: AppColors.accent,
-          unselectedItemColor: AppColors.textSecondary,
-          type: BottomNavigationBarType.fixed,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.category), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.auto_awesome), label: ""),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
-          ],
-        ),
-      ),
-
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          "Digital Inventory",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.notifications_none_rounded),
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: loadProducts,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.02),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(w * 0.06),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    gradient: LinearGradient(
-                      colors: [AppColors.primary.withOpacity(0.35), AppColors.surface],
+        child: Column(
+          children: [
+            // Masthead: title, bell, heavy rule.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 12, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w800),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Welcome back",
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: w * 0.04),
-                          ),
-                          SizedBox(height: h * 0.01),
-                          Text(
-                            displayName,
-                            style: TextStyle(fontSize: w * 0.08, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.primary.withOpacity(.15),
-                        ),
-                        child: Icon(Icons.folder_copy_outlined, color: AppColors.primary, size: 34),
-                      ),
-                    ],
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.notifications_none_rounded, size: 22),
+                    color: AppColors.textPrimary,
                   ),
-                ),
-
-                sectionGap,
-
-                if (_stats != null) ...[
-                  _sectionChip("Vault Overview"),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(22)),
-                    child: Row(
-                      children: [
-                        _statTile('Products', '${_stats!.totalProducts}'),
-                        _statTile('Value', '₹${_stats!.totalValue.toStringAsFixed(0)}'),
-                        _statTile('Expiring soon', '${_stats!.expiringSoon}', warn: _stats!.expiringSoon > 0),
-                        _statTile('Expired', '${_stats!.expired}', warn: _stats!.expired > 0),
-                      ],
-                    ),
-                  ),
-                  sectionGap,
                 ],
+              ),
+            ),
+            Container(height: 1.5, color: AppColors.rule),
 
-                Container(
-                  height: h * 0.065,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.search, color: AppColors.textSecondary),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onSubmitted: _runSearch,
-                          textInputAction: TextInputAction.search,
-                          style: TextStyle(color: AppColors.textPrimary),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Search products...",
-                            hintStyle: TextStyle(color: AppColors.textSecondary),
-                            isCollapsed: true,
-                          ),
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.accent,
+                onRefresh: loadProducts,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  children: [
+                    Text(
+                      'Total value, ${summary.total} ${summary.total == 1 ? 'product' : 'products'}',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '₹${_inr(summary.value)}',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 68,
+                          height: 1.1,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -3,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 22),
+                    _statRow(summary),
+                    _searchField(),
+                    const SizedBox(height: 22),
+                    _recentHeader(),
+                    _recentList(recent),
+                  ],
                 ),
-
-                sectionGap,
-
-                _sectionChip("Recent Products"),
-                const SizedBox(height: 12),
-
-                if (_isLoading)
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                  )
-                else if (_errorMessage != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.redAccent, size: 30),
-                        const SizedBox(height: 10),
-                        Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 10),
-                        TextButton(onPressed: loadProducts, child: const Text('RETRY')),
-                      ],
-                    ),
-                  )
-                else if (recentProducts.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
-                    child: Column(
-                      children: [
-                        Icon(Icons.inventory_2_outlined, color: AppColors.textSecondary, size: 30),
-                        SizedBox(height: 10),
-                        Text(
-                          "No recent products",
-                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          "Products you add will appear here",
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  ...recentProducts.map((product) => _productCard(product)),
-
-                const SizedBox(height: 8),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ProductsScreen()),
-                      );
-                      loadProducts();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: const Text(
-                      "VIEW ALL PRODUCTS",
-                      style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: h * 0.05),
-              ],
+              ),
             ),
-          ),
+
+            _bottomBar(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _sectionChip(String title) {
+  Widget _statRow(({int total, double value, int expiring, int expired}) s) {
+    final covered = (s.total - s.expired).clamp(0, s.total);
+    Widget cell(String value, String label, {bool alert = false, bool first = false}) {
+      return Expanded(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(first ? 0 : 12, 12, 8, 12),
+          decoration: BoxDecoration(
+            border: first ? null : Border(left: BorderSide(color: AppColors.rule, width: 0.8)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  color: alert ? AppColors.accent : AppColors.textPrimary,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
+        border: Border(
+          top: BorderSide(color: AppColors.rule, width: 0.8),
+          bottom: BorderSide(color: AppColors.rule, width: 0.8),
+        ),
       ),
-      child: Text(title, style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            cell('$covered', 'Covered', first: true),
+            cell('${s.expiring}', 'Expiring'),
+            cell('${s.expired}', 'Expired', alert: true),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _statTile(String label, String value, {bool warn = false}) {
-    return Expanded(
-      child: Column(
+  Widget _searchField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.rule, width: 0.8))),
+      child: Row(
         children: [
-          Text(
-            value,
-            style: TextStyle(
-              color: warn ? Colors.orangeAccent : AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onSubmitted: _runSearch,
+              textInputAction: TextInputAction.search,
+              style: TextStyle(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                hintText: 'Search',
+                hintStyle: TextStyle(color: AppColors.textSecondary),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                isDense: true,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
           ),
         ],
       ),
     );
   }
 
-  Widget _productCard(Product product) {
+  Widget _recentHeader() {
+    return Container(
+      padding: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.rule, width: 0.8))),
+      child: Row(
+        children: [
+          Text('Recent', style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w800)),
+          const Spacer(),
+          GestureDetector(
+            onTap: () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductsScreen()));
+              loadProducts();
+            },
+            child: Text('All →', style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _recentList(List<Product> recent) {
+    if (_isLoading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2)),
+      );
+    }
+    if (_errorMessage != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(_errorMessage!, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            TextButton(onPressed: loadProducts, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+    if (recent.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 28),
+        child: Text(
+          'No products yet. Tap + to add your first one.',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        for (var i = 0; i < recent.length; i++) _productRow(i + 1, recent[i]),
+      ],
+    );
+  }
+
+  Widget _productRow(int index, Product product) {
     return InkWell(
       onTap: () async {
         await Navigator.push(
@@ -416,33 +358,112 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
         loadProducts();
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.rule, width: 0.8))),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(14),
+            SizedBox(
+              width: 36,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Text(
+                  index.toString().padLeft(2, '0'),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
               ),
-              child: Icon(Icons.inventory_2_outlined, color: AppColors.primary),
             ),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product.name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _warrantyLine(product),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            const SizedBox(width: 12),
+            if (product.price != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Text(
+                  '₹${_inr(product.price!)}',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w800),
+                ),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Bottom bar: heavy top rule, text labels, and the square accent Add tab
+  /// docked on the right.
+  Widget _bottomBar() {
+    Widget tab(String label, {bool selected = false, VoidCallback? onTap}) {
+      return Expanded(
+        child: InkWell(
+          onTap: onTap,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.rule, width: 1.5)),
+      ),
+      child: Row(
+        children: [
+          tab('Home', selected: true),
+          tab('Categories', onTap: () async {
+            await Navigator.push(context, FadeSlideRoute(page: const CategoriesScreen()));
+            loadProducts();
+          }),
+          tab('Profile', onTap: () async {
+            await Navigator.push(context, FadeSlideRoute(page: const ProfileScreen()));
+            loadProducts();
+          }),
+          InkWell(
+            onTap: () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (context) => const ScanScreen()));
+              loadProducts();
+            },
+            child: Container(
+              width: 72,
+              color: AppColors.accent,
+              alignment: Alignment.center,
+              child: Icon(Icons.add, color: AppColors.onAccent, size: 28),
+            ),
+          ),
+        ],
       ),
     );
   }

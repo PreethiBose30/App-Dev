@@ -1,35 +1,68 @@
 import 'package:flutter/material.dart';
 import 'theme_controller.dart';
 
-/// Resolves to the dark or light palette depending on the current
-/// ThemeController state. These used to be `static const` -- now they're
-/// getters so Appearance settings can change them live, at the cost of call
-/// sites no longer being usable in `const` expressions (see
-/// ThemeController and the screens that were migrated off `const` for this).
+/// One complete set of colours for a brightness.
+class AppPalette {
+  final Color background;
+  final Color surface;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color ruleSoft;
+  final Color accent;
+  const AppPalette({
+    required this.background,
+    required this.surface,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.ruleSoft,
+    required this.accent,
+  });
+
+  /// Swiss / editorial: warm paper, near-black ink, one vermilion accent.
+  static const light = AppPalette(
+    background: Color(0xFFF5F3EE),
+    surface: Color(0xFFEBE8E1),
+    textPrimary: Color(0xFF141414),
+    textSecondary: Color(0xFF6B6963),
+    ruleSoft: Color(0xFFC9C5BB),
+    accent: Color(0xFFE03C16),
+  );
+
+  static const dark = AppPalette(
+    background: Color(0xFF0F0F0F),
+    surface: Color(0xFF1B1B1A),
+    textPrimary: Color(0xFFF3F1EC),
+    textSecondary: Color(0xFF8E8C86),
+    ruleSoft: Color(0xFF3A3936),
+    accent: Color(0xFFFF5A2B),
+  );
+}
+
+/// Resolves to the light or dark palette from the current ThemeController
+/// state. These are getters (not `static const`) so Appearance settings can
+/// switch them live; call sites therefore cannot be used in `const`
+/// expressions. The accent is fixed, not user-customisable.
 class AppColors {
   static bool get _isDark =>
       ThemeController.instance.isDark(WidgetsBinding.instance.platformDispatcher.platformBrightness);
 
-  static Color get background => _isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF4F4F2);
-  static Color get surface => _isDark ? const Color(0xFF1A1A1A) : const Color(0xFFFFFFFF);
-  static Color get textPrimary => _isDark ? const Color(0xFFF4F4F0) : const Color(0xFF17171A);
-  static Color get textSecondary => _isDark ? const Color(0xFF7A7A7A) : const Color(0xFF6B6B70);
+  static AppPalette get _p => _isDark ? AppPalette.dark : AppPalette.light;
 
-  /// The user's chosen accent color (Appearance settings). Used for
-  /// emphasis -- buttons, selected states, switches -- across the app; see
-  /// `primary` below for the (non-accent) foreground-emphasis color that
-  /// most existing screens use for icons/highlighted text.
-  static Color get accent => ThemeController.instance.accent;
+  static Color get background => _p.background;
+  static Color get surface => _p.surface;
+  static Color get textPrimary => _p.textPrimary;
+  static Color get textSecondary => _p.textSecondary;
 
-  /// Black or white, whichever reads clearly on top of [accent] -- used for
-  /// icons/text drawn directly on an accent-colored surface (e.g. the FAB).
-  static Color get onAccent =>
-      ThemeData.estimateBrightnessForColor(accent) == Brightness.dark ? Colors.white : Colors.black;
+  /// Hairline rules and borders: the structural element of the design.
+  static Color get rule => _p.textPrimary;
+  static Color get ruleSoft => _p.ruleSoft;
 
-  /// Foreground-emphasis color (icons, highlighted text, selected nav
-  /// items). Kept distinct from [accent] because it was already used
-  /// pervasively as "the off-white foreground" in the original dark-only
-  /// design -- swapping it for an arbitrary accent color would tint body
-  /// text/icons instead of just branded controls.
-  static Color get primary => _isDark ? const Color(0xFFF4F4F0) : const Color(0xFF17171A);
+  /// The one accent colour: the Add button, selected states, "Expired", links.
+  static Color get accent => _p.accent;
+
+  /// Text/icons drawn directly on an accent surface.
+  static Color get onAccent => Colors.white;
+
+  /// Foreground-emphasis colour (icons, highlighted text).
+  static Color get primary => _p.textPrimary;
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../dashboard/add_product_screen.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -12,20 +13,20 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: AppColors.background,
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
+        backgroundColor: AppColors.background,
         elevation: 0,
 
-        iconTheme: const IconThemeData(
-          color: Color(0xFFF4F4F0),
+        iconTheme: IconThemeData(
+          color: AppColors.textPrimary,
         ),
 
-        title: const Text(
+        title: Text(
           'OCR RESULT',
           style: TextStyle(
-            color: Color(0xFFF4F4F0),
+            color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.5,
@@ -40,10 +41,10 @@ class ResultScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            const Text(
+            Text(
               'EXTRACTED TEXT',
               style: TextStyle(
-                color: Color(0xFFF4F4F0),
+                color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
@@ -52,10 +53,10 @@ class ResultScreen extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            const Text(
+            Text(
               'Review the text detected from your document.',
               style: TextStyle(
-                color: Color(0xFF7A7A7A),
+                color: AppColors.textSecondary,
                 fontSize: 13,
               ),
             ),
@@ -69,9 +70,9 @@ class ResultScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
 
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.surface,
 
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.zero,
 
                   border: Border.all(
                     color: Colors.white.withOpacity(0.08),
@@ -84,8 +85,8 @@ class ResultScreen extends StatelessWidget {
                         ? 'No text was detected.'
                         : extractedText,
 
-                    style: const TextStyle(
-                      color: Color(0xFFF4F4F0),
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontSize: 15,
                       height: 1.6,
                     ),
@@ -109,10 +110,10 @@ class ResultScreen extends StatelessWidget {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFF4F4F0),
-                    side: const BorderSide(color: Color(0xFF555555)),
+                    foregroundColor: AppColors.textPrimary,
+                    side: BorderSide(color: AppColors.textSecondary),
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                   ),
                   child: const Text(
                     'USE AS NEW PRODUCT NOTES',
@@ -132,16 +133,16 @@ class ResultScreen extends StatelessWidget {
                 },
 
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF4F4F0),
+                  backgroundColor: AppColors.textPrimary,
 
-                  foregroundColor: const Color(0xFF0D0D0D),
+                  foregroundColor: AppColors.background,
 
                   padding: const EdgeInsets.symmetric(
                     vertical: 18,
                   ),
 
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
 
