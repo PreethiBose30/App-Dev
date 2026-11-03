@@ -15,6 +15,7 @@ class NotificationService {
 
   static const _masterEnabledKey = 'notif_master_enabled';
   static const _daysBeforeKey = 'notif_days_before';
+  static const _lateKeyPrefix = 'notif_late_';
 
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
@@ -112,11 +113,27 @@ class NotificationService {
       return;
     }
 
-    final idealFireDate = expiry.subtract(Duration(days: daysBefore));
-    // If the ideal "N days before" moment already passed but the warranty
-    // itself hasn't expired yet, fire almost immediately instead of
-    // silently never notifying at all.
-    final fireDate = idealFireDate.isAfter(DateTime.now()) ? idealFireDate : DateTime.now().add(const Duration(minutes: 1));
+    // Fire at 9:00 local time on the chosen day. The expiry is a midnight
+    // timestamp, so "N days before" would otherwise arrive at 00:00.
+    final target = expiry.subtract(Duration(days: daysBefore));
+    final idealFireDate = DateTime(target.year, target.month, target.day, 9);
+    final now = DateTime.now();
+    final lateKey = '$_lateKeyPrefix${product.id}';
+    final lateStamp = '${expiry.toIso8601String()}|$daysBefore';
+
+    final DateTime fireDate;
+    if (idealFireDate.isAfter(now)) {
+      fireDate = idealFireDate;
+      await HiveService.settingsBox.delete(lateKey);
+    } else {
+      // The ideal moment already passed but the warranty hasn't expired:
+      // notify once, shortly. This runs every time the product list loads,
+      // so remember that we already did (per expiry date + lead time) --
+      // otherwise the same reminder would fire again on every app open.
+      if (HiveService.settingsBox.get(lateKey) == lateStamp) return;
+      fireDate = now.add(const Duration(minutes: 1));
+      await HiveService.settingsBox.put(lateKey, lateStamp);
+    }
 
     await _plugin.zonedSchedule(
       id,
@@ -148,6 +165,10 @@ class NotificationService {
     if (kIsWeb) return;
     await init();
     await _plugin.cancelAll();
+    final box = HiveService.settingsBox;
+    for (final key in box.keys.where((k) => k is String && k.startsWith(_lateKeyPrefix)).toList()) {
+      await box.delete(key);
+    }
   }
 
   /// Re-syncs every product's reminder in one pass. Called after the vault
@@ -164,6 +185,13 @@ class NotificationService {
     }
     for (final product in products) {
       await syncReminder(product);
+    }
+
+    // Drop reminders for products that are gone (e.g. deleted on another
+    // phone), so they don't fire for something that no longer exists.
+    final liveIds = {for (final p in products) if (p.id != null) _idFor(p.id!)};
+    for (final pending in await _plugin.pendingNotificationRequests()) {
+      if (!liveIds.contains(pending.id)) await _plugin.cancel(pending.id);
     }
   }
 

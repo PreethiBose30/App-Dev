@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/theme_controller.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import 'about_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'edit_profile_screen.dart';
 import 'notification_settings_screen.dart';
@@ -49,25 +50,8 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
     if (mounted) setState(() {}); // Pick up the name AuthService just refreshed.
   }
 
-  Future<void> _showAbout() async {
-    String version = '';
-    try {
-      final info = await PackageInfo.fromPlatform();
-      version = '${info.version}+${info.buildNumber}';
-    } catch (_) {
-      version = 'unavailable';
-    }
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Digital Inventory', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text('Version $version', style: TextStyle(color: AppColors.textSecondary)),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-      ),
-    );
+  void _showAbout() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen()));
   }
 
   @override
@@ -227,8 +211,8 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
 
               _ProfileOption(
                 icon: Icons.info_outline,
-                title: 'About Digital Inventory',
-                subtitle: 'App information and version',
+                title: 'About',
+                subtitle: 'The app, its makers and RoboVITics',
                 onTap: _showAbout,
               ),
 

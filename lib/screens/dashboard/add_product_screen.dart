@@ -356,7 +356,18 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
               const SizedBox(height: 14),
               SwitchListTile(
                 value: _reminderEnabled,
-                onChanged: (value) => setState(() => _reminderEnabled = value),
+                onChanged: (value) async {
+                  setState(() => _reminderEnabled = value);
+                  if (!value) return;
+                  // Android 13+ needs the user's permission before any
+                  // notification can show; ask at the moment they opt in.
+                  final granted = await NotificationService.requestPermission();
+                  if (!granted && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Notifications are blocked. Allow them in Settings to get reminders.')),
+                    );
+                  }
+                },
                 activeColor: AppColors.accent,
                 title: Text(
                   'WARRANTY EXPIRY REMINDER',

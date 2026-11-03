@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/app_user.dart';
 import 'api_client.dart';
 import 'hive_service.dart';
+import 'notification_service.dart';
 
 /// Everything auth-related. Sign-up, sign-in and password handling are done
 /// by Firebase Authentication; this app never sees or stores a password
@@ -122,6 +123,11 @@ class AuthService {
     await _storage.delete(key: _userKey);
     _cachedUser = null;
     await HiveService.clearAssetCache();
+    // Reminders belong to the signed-out account; don't let the next person
+    // on this phone receive them.
+    try {
+      await NotificationService.cancelAll();
+    } catch (_) {}
   }
 
   /// Firebase error codes -> the plain messages the screens already show via
