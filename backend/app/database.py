@@ -4,7 +4,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 
 from . import config
 
@@ -135,6 +135,13 @@ async def _ensure_indexes() -> None:
         unique=True,
         partialFilterExpression={"firebaseUid": {"$type": "string"}},
     )
+
+
+def files_bucket() -> AsyncIOMotorGridFSBucket:
+    """GridFS bucket holding uploaded document files. Files live in the
+    database, not on the server's disk, so they survive restarts and
+    redeploys on hosts with an ephemeral filesystem."""
+    return AsyncIOMotorGridFSBucket(db, bucket_name="document_files")
 
 
 def close_db() -> None:

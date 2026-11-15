@@ -3,6 +3,7 @@ import '../../models/local_document.dart';
 import '../../services/document_picker.dart';
 import '../../services/document_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/swiss.dart';
 import '../../theme/theme_controller.dart';
 
 /// Capture/pick a document for one asset, preview it, and let the user
@@ -60,15 +61,10 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        title: Text('ADD DOCUMENT', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-      ),
+      appBar: swissAppBar(context, 'Add document'),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           child: _picked == null ? _buildPickerOptions() : _buildPreview(),
         ),
       ),
@@ -76,61 +72,23 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
   }
 
   Widget _buildPickerOptions() {
-    return Column(
+    return ListView(
       children: [
-        const Spacer(),
-        Icon(Icons.description_outlined, color: AppColors.textSecondary, size: 60),
-        const SizedBox(height: 16),
         Text(
-          'Scan a bill, warranty card, or insurance paper',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-        const Spacer(),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _pick(DocumentPicker.fromCamera),
-            icon: const Icon(Icons.camera_alt_outlined),
-            label: const Text('TAKE PHOTO'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.background,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            ),
-          ),
+          'Add a bill or warranty card.',
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 34, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.6),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _pick(DocumentPicker.fromGallery),
-            icon: const Icon(Icons.photo_library_outlined),
-            label: const Text('CHOOSE FROM GALLERY'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: BorderSide(color: AppColors.primary),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            ),
-          ),
+        Text(
+          'Take a photo, pick one from your gallery, or choose a PDF. It is saved on this phone and uploaded when you are online.',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 15, height: 1.4),
         ),
+        const SizedBox(height: 32),
+        SwissButton('Take photo', icon: Icons.camera_alt_outlined, onPressed: () => _pick(DocumentPicker.fromCamera)),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _pick(DocumentPicker.fromFile),
-            icon: const Icon(Icons.attach_file),
-            label: const Text('CHOOSE FILE (PDF)'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
-              side: BorderSide(color: AppColors.ruleSoft),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            ),
-          ),
-        ),
+        SwissButton('Choose from gallery', icon: Icons.photo_library_outlined, outlined: true, onPressed: () => _pick(DocumentPicker.fromGallery)),
+        const SizedBox(height: 12),
+        SwissButton('Choose file (PDF)', icon: Icons.attach_file, outlined: true, onPressed: () => _pick(DocumentPicker.fromFile)),
       ],
     );
   }
@@ -143,7 +101,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
         Expanded(
           child: Container(
             width: double.infinity,
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
+            decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.ruleSoft, width: 0.8)),
             clipBehavior: Clip.antiAlias,
             child: doc.isImage
                 ? Image.file(doc.file, fit: BoxFit.contain)
@@ -151,11 +109,15 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.picture_as_pdf_outlined, color: AppColors.primary, size: 60),
+                        Icon(Icons.picture_as_pdf_outlined, color: AppColors.textPrimary, size: 56),
                         const SizedBox(height: 12),
-                        Text(
-                          doc.filename,
-                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            doc.filename,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ],
                     ),
@@ -163,50 +125,14 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
           ),
         ),
         const SizedBox(height: 20),
+        SwissButton('Confirm and save', onPressed: _confirm, loading: _isSaving),
+        const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _isSaving ? null : _retake,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textPrimary,
-                  side: BorderSide(color: AppColors.ruleSoft),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                ),
-                child: const Text('RETAKE'),
-              ),
-            ),
+            Expanded(child: SwissButton('Retake', outlined: true, onPressed: _isSaving ? null : _retake)),
             const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _isSaving ? null : () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.accent,
-                  side: BorderSide(color: AppColors.accent.withOpacity(0.4)),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                ),
-                child: const Text('CANCEL'),
-              ),
-            ),
+            Expanded(child: SwissButton('Cancel', outlined: true, onPressed: _isSaving ? null : () => Navigator.pop(context))),
           ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isSaving ? null : _confirm,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.background,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            ),
-            child: _isSaving
-                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('CONFIRM & SAVE', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-          ),
         ),
       ],
     );

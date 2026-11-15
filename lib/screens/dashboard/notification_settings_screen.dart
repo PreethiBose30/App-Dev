@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/swiss.dart';
 import '../../theme/theme_controller.dart';
 import '../../services/api_client.dart';
 import '../../services/asset_repository.dart';
@@ -69,73 +70,55 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        title: Text('NOTIFICATIONS', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
-      ),
+      appBar: swissAppBar(context, 'Notifications'),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 35),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
           children: [
+            Text(
+              'Warranty reminders',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 34, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.6),
+            ),
+            const SizedBox(height: 20),
             if (_permissionGranted == false)
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.12),
-                  borderRadius: BorderRadius.zero,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.notifications_off_outlined, color: AppColors.accent),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Notifications are turned off for this app at the system level. '
-                        'Enable them in Settings > Apps > Digital Inventory > Notifications to receive warranty reminders.',
-                        style: TextStyle(color: AppColors.textPrimary, fontSize: 12),
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.accent, width: 3))),
+                child: Text(
+                  'Notifications are turned off for this app in system settings. Turn them on in '
+                  'Settings > Apps > Digital Inventory > Notifications to receive warranty reminders.',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 13, height: 1.4),
                 ),
               ),
-            Container(
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
-              child: SwitchListTile(
-                value: _remindersEnabled,
-                onChanged: _onToggleReminders,
-                activeColor: AppColors.accent,
-                title: Text('WARRANTY EXPIRY REMINDERS', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
-                subtitle: Text('Get notified before a warranty expires', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+            const SwissLabel('Reminders'),
+            SwitchListTile(
+              value: _remindersEnabled,
+              onChanged: _onToggleReminders,
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Warranty expiry reminders',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                'Get notified at 9:00 AM before a warranty expires',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
             ),
-            const SizedBox(height: 28),
-            Text(
-              'REMIND ME',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
+            const SwissLabel('Remind me'),
             Opacity(
               opacity: _remindersEnabled ? 1 : 0.4,
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: NotificationService.allowedLeadTimes.map((days) {
-                  final selected = days == _daysBefore;
-                  return ChoiceChip(
-                    label: Text('$days day${days == 1 ? '' : 's'} before'),
-                    selected: selected,
-                    onSelected: _remindersEnabled ? (_) => _onChangeDaysBefore(days) : null,
-                    selectedColor: AppColors.accent,
-                    backgroundColor: AppColors.surface,
-                    labelStyle: TextStyle(
-                      color: selected ? AppColors.onAccent : AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
+              child: Column(
+                children: [
+                  for (final days in NotificationService.allowedLeadTimes)
+                    SwissRow(
+                      soft: true,
+                      title: '$days ${days == 1 ? 'day' : 'days'} before',
+                      onTap: _remindersEnabled ? () => _onChangeDaysBefore(days) : null,
+                      trailing: days == _daysBefore ? Icon(Icons.check, color: AppColors.accent, size: 20) : null,
                     ),
-                  );
-                }).toList(),
+                ],
               ),
             ),
             if (_isResyncing) ...[
@@ -144,7 +127,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 children: [
                   SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent)),
                   const SizedBox(width: 10),
-                  Text('Updating reminders...', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  Text('Updating reminders...', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                 ],
               ),
             ],

@@ -15,6 +15,7 @@ class ConnectivityService {
 
   static StreamSubscription<List<ConnectivityResult>>? _subscription;
   static Timer? _debounce;
+  static bool _slowProbeRunning = false;
 
   static void start() {
     if (_subscription != null) return;
@@ -46,6 +47,26 @@ class ConnectivityService {
       _isOnline = reachable;
       _statusController.add(_isOnline);
     }
+    if (hasInterface && !reachable) unawaited(_slowProbe());
     return _isOnline;
+  }
+
+  /// The quick ping failed although the phone has a network. The usual
+  /// reason is a server that is asleep (free hosting spins down when idle)
+  /// and needs up to a minute to wake. Wait for it once in the background
+  /// and flip to online when it answers, so pending uploads still sync
+  /// without the user having to toggle their connection.
+  static Future<void> _slowProbe() async {
+    if (_slowProbeRunning) return;
+    _slowProbeRunning = true;
+    try {
+      final reachable = await ApiClient.pingBackend(timeout: const Duration(seconds: 75));
+      if (reachable && !_isOnline) {
+        _isOnline = true;
+        _statusController.add(true);
+      }
+    } finally {
+      _slowProbeRunning = false;
+    }
   }
 }

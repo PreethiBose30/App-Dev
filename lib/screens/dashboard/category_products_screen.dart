@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/product_row.dart';
+import '../../widgets/swiss.dart';
 import '../../theme/theme_controller.dart';
 import '../../models/product.dart';
 import '../../services/asset_repository.dart';
@@ -51,68 +53,35 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> with Th
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        title: Text(
-          widget.categoryName.toUpperCase(),
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.5),
-        ),
-      ),
+      appBar: swissAppBar(context, widget.categoryName),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2));
     }
-
     if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, color: AppColors.accent, size: 40),
-            const SizedBox(height: 12),
-            Text(_errorMessage!, style: TextStyle(color: AppColors.textPrimary)),
-            const SizedBox(height: 12),
-            TextButton(onPressed: loadCategoryProducts, child: const Text('RETRY')),
-          ],
-        ),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: SwissMessage(_errorMessage!, actionLabel: 'Retry', onAction: loadCategoryProducts),
       );
     }
-
     if (categoryProducts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory_2_outlined, color: AppColors.textSecondary, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              'No products in ${widget.categoryName}',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Add a product to see it here',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-            ),
-          ],
-        ),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: SwissMessage('No products in ${widget.categoryName}', body: 'Add a product to see it here.'),
       );
     }
-
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       itemCount: categoryProducts.length,
       itemBuilder: (context, index) {
-        final Product product = categoryProducts[index];
-
-        return InkWell(
-          borderRadius: BorderRadius.zero,
+        final product = categoryProducts[index];
+        return ProductRow(
+          number: index + 1,
+          product: product,
           onTap: () async {
             await Navigator.push(
               context,
@@ -120,44 +89,6 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> with Th
             );
             loadCategoryProducts();
           },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 14),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.zero,
-              border: Border.all(color: Colors.white.withOpacity(0.06)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  child: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 26),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
-              ],
-            ),
-          ),
         );
       },
     );

@@ -73,8 +73,9 @@ class _SplashScreenState extends State<SplashScreen>
                 "Digital Inventory",
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1.2,
                 ),
               ),
               const SizedBox(height: 10),

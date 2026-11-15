@@ -6,6 +6,8 @@ import '../../services/document_picker.dart';
 import '../../services/document_repository.dart';
 import '../../services/notification_service.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/format.dart';
+import '../../widgets/swiss.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/document_slot_field.dart';
 
@@ -64,12 +66,13 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
       firstDate: DateTime(2000),
       lastDate: DateTime(2050),
       builder: (context, child) {
+        final base = Theme.of(context);
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+          data: base.copyWith(
+            colorScheme: base.colorScheme.copyWith(
               primary: AppColors.accent,
               onPrimary: AppColors.onAccent,
-              surface: AppColors.surface,
+              surface: AppColors.background,
               onSurface: AppColors.textPrimary,
             ),
           ),
@@ -202,150 +205,126 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
     required TextEditingController controller,
     required String label,
     TextInputType? keyboardType,
+    String? hint,
+    String? prefixText,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: TextStyle(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 0.8),
-        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.ruleSoft)),
-        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.accent)),
-      ),
+      style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+      decoration: swissInput(label, hint: hint, prefixText: prefixText),
     );
   }
 
   Widget _dateTile({required String title, required DateTime? date, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.zero,
       child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.textPrimary, width: 0.8))),
         child: Row(
           children: [
-            Icon(Icons.calendar_month_outlined, color: AppColors.textPrimary),
-            const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                date == null ? title : '$title: ${date.day}/${date.month}/${date.year}',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  const SizedBox(height: 3),
+                  Text(
+                    date == null ? 'Not set' : dayMonthYear(date),
+                    style: TextStyle(
+                      color: date == null ? AppColors.textSecondary : AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
+            Icon(Icons.calendar_month_outlined, color: AppColors.textPrimary, size: 20),
           ],
         ),
       ),
     );
   }
 
+  Widget _section(String label) => Padding(
+        padding: const EdgeInsets.only(top: 28, bottom: 6),
+        child: SwissLabel(label),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        title: Text(
-          _isEditing ? 'EDIT PRODUCT' : 'ADD PRODUCT',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-      ),
+      appBar: swissAppBar(context, _isEditing ? 'Edit product' : 'New product'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 10, 24, 35),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                _isEditing ? 'UPDATE ASSET RECORD' : 'NEW ASSET RECORD',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: 2),
+                _isEditing ? 'Update the details.' : 'What did you buy?',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 34, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.6),
+              ),
+              _section('Product'),
+              _textField(controller: _nameController, label: 'Name'),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedCategory,
+                dropdownColor: AppColors.background,
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                decoration: swissInput('Category'),
+                items: _categories.map((category) {
+                  return DropdownMenuItem(value: category, child: Text(category));
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) setState(() => _selectedCategory = value);
+                },
               ),
               const SizedBox(height: 8),
-              Text(
-                'Enter the product details below',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
-                child: Column(
-                  children: [
-                    _textField(controller: _nameController, label: 'PRODUCT NAME'),
-                    const SizedBox(height: 18),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCategory,
-                      dropdownColor: AppColors.surface,
-                      style: TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'CATEGORY',
-                        labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-                      ),
-                      items: _categories.map((category) {
-                        return DropdownMenuItem(value: category, child: Text(category));
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) setState(() => _selectedCategory = value);
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    _textField(controller: _brandController, label: 'BRAND'),
-                    const SizedBox(height: 18),
-                    _textField(controller: _modelController, label: 'MODEL NUMBER'),
-                    const SizedBox(height: 18),
-                    _textField(controller: _priceController, label: 'PRICE (OPTIONAL)', keyboardType: TextInputType.number),
-                    const SizedBox(height: 18),
-                    _textField(
-                      controller: _warrantyController,
-                      label: 'WARRANTY DURATION (MONTHS)',
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 18),
-                    _textField(controller: _notesController, label: 'NOTES (OPTIONAL)'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
+              _textField(controller: _brandController, label: 'Brand'),
+              const SizedBox(height: 8),
+              _textField(controller: _modelController, label: 'Model number'),
+              const SizedBox(height: 8),
+              _textField(controller: _priceController, label: 'Price (optional)', keyboardType: TextInputType.number, prefixText: '₹ '),
+              _section('Warranty'),
               _dateTile(
-                title: 'CHOOSE PURCHASE DATE',
+                title: 'Purchase date',
                 date: _purchaseDate,
                 onTap: () => _pickDate(isPurchaseDate: true),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
+              _textField(
+                controller: _warrantyController,
+                label: 'Warranty length (months)',
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 8),
               _dateTile(
-                title: 'CHOOSE NEXT SERVICE DATE',
+                title: 'Next service date (optional)',
                 date: _serviceDate,
                 onTap: () => _pickDate(isPurchaseDate: false),
               ),
-              if (_isEditing) ...[
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
-                  child: Row(
-                    children: [
-                      Icon(Icons.folder_outlined, color: AppColors.textSecondary, size: 18),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Text(
-                          'Scanned bills and warranty cards are managed from the Files tab on this product',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
+              const SizedBox(height: 8),
+              _textField(controller: _notesController, label: 'Notes (optional)'),
+              _section('Documents'),
+              if (_isEditing)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Scanned bills and warranty cards are managed from the Files section of this product.',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                   ),
-                ),
-              ] else ...[
-                const SizedBox(height: 14),
+                )
+              else ...[
                 DocumentSlotField(
                   label: 'Warranty card (optional)',
                   value: _warrantyCardDoc,
                   enabled: !_isSaving,
                   onChanged: (doc) => setState(() => _warrantyCardDoc = doc),
                 ),
-                const SizedBox(height: 14),
                 DocumentSlotField(
                   label: 'Invoice (optional)',
                   value: _invoiceDoc,
@@ -353,7 +332,7 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
                   onChanged: (doc) => setState(() => _invoiceDoc = doc),
                 ),
               ],
-              const SizedBox(height: 14),
+              _section('Reminder'),
               SwitchListTile(
                 value: _reminderEnabled,
                 onChanged: (value) async {
@@ -368,30 +347,21 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
                     );
                   }
                 },
-                activeColor: AppColors.accent,
                 title: Text(
-                  'WARRANTY EXPIRY REMINDER',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                  'Warranty expiry reminder',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
                   'Get notified before the warranty expires',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
                 contentPadding: EdgeInsets.zero,
               ),
               const SizedBox(height: 28),
-              ElevatedButton(
-                onPressed: _isSaving ? null : _saveProduct,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: AppColors.onAccent,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                ),
-                child: Text(
-                  _isSaving ? 'SAVING...' : (_isEditing ? 'UPDATE PRODUCT' : 'SAVE PRODUCT'),
-                  style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
-                ),
+              SwissButton(
+                _isEditing ? 'Update product' : 'Save product',
+                onPressed: _saveProduct,
+                loading: _isSaving,
               ),
             ],
           ),

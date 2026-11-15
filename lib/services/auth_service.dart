@@ -57,8 +57,8 @@ class AuthService {
     }
   }
 
-  static Future<AppUser> _loadProfile() async {
-    final data = await ApiClient.get('/auth/me');
+  static Future<AppUser> _loadProfile({Duration? timeout}) async {
+    final data = await ApiClient.get('/auth/me', timeout: timeout);
     return _persist(data as Map<String, dynamic>);
   }
 
@@ -82,7 +82,11 @@ class AuthService {
     }
 
     try {
-      return await _loadProfile();
+      // Bounded: a sleeping server (free hosting spins down when idle) can
+      // take a minute to answer, and the splash screen must not hang on
+      // it. On timeout the cached profile opens the app; Home then loads
+      // fresh data on its own.
+      return await _loadProfile(timeout: const Duration(seconds: 8));
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) {
         await logout();
@@ -112,6 +116,18 @@ class AuthService {
   static Future<AppUser> updateProfile({required String name}) async {
     final data = await ApiClient.put('/auth/me', body: {'name': name});
     return _persist(data as Map<String, dynamic>);
+  }
+
+  /// Asks Firebase to email a password-reset link. Firebase does not say
+  /// whether the address has an account (by design), so callers should
+  /// word their confirmation accordingly.
+  static Future<void> sendPasswordReset(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') return; // same outcome as success
+      throw _friendly(e);
+    }
   }
 
   static Future<void> logout() async {

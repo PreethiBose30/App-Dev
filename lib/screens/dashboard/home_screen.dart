@@ -4,9 +4,12 @@ import '../../theme/app_colors.dart';
 import '../../theme/theme_controller.dart';
 import '../products/product_detail_screen.dart';
 import '../products/products_screen.dart';
+import '../../utils/format.dart';
 import '../../utils/page_route.dart';
+import '../../widgets/swiss.dart';
 import '../scanner/scan_screen.dart';
 import 'categories_screen.dart';
+import 'notification_settings_screen.dart';
 import 'profile_screen.dart';
 import '../../models/product.dart';
 import '../../services/asset_repository.dart';
@@ -113,29 +116,6 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
     return (total: _products.length, value: value, expiring: expiring, expired: expired);
   }
 
-  /// 81234 -> "81,234"; 1234567 -> "12,34,567" (Indian digit grouping).
-  static String _inr(num amount) {
-    final digits = amount.round().abs().toString();
-    if (digits.length <= 3) return '${amount < 0 ? '-' : ''}$digits';
-    final last3 = digits.substring(digits.length - 3);
-    var rest = digits.substring(0, digits.length - 3);
-    final parts = <String>[];
-    while (rest.length > 2) {
-      parts.insert(0, rest.substring(rest.length - 2));
-      rest = rest.substring(0, rest.length - 2);
-    }
-    if (rest.isNotEmpty) parts.insert(0, rest);
-    return '${amount < 0 ? '-' : ''}${parts.join(',')},$last3';
-  }
-
-  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  static String _warrantyLine(Product p) {
-    final e = p.warrantyExpiry;
-    final warranty = e == null ? 'No warranty' : 'Warranty to ${_months[e.month - 1]} ${e.year}';
-    return '${p.category} · $warranty';
-  }
-
   @override
   Widget build(BuildContext context) {
     final firstName = (AuthService.cachedUser?.name ?? '').trim().split(' ').first;
@@ -161,7 +141,11 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    tooltip: 'Reminders',
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()),
+                    ),
                     icon: const Icon(Icons.notifications_none_rounded, size: 22),
                     color: AppColors.textPrimary,
                   ),
@@ -187,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        '₹${_inr(summary.value)}',
+                        '₹${formatInr(summary.value)}',
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 68,
@@ -305,7 +289,11 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
               await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductsScreen()));
               loadProducts();
             },
-            child: Text('All →', style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w700)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text('All', style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_forward, size: 15, color: AppColors.accent),
+            ]),
           ),
         ],
       ),
@@ -316,7 +304,12 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
     if (_isLoading) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 40),
-        child: Center(child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2)),
+        child: Column(
+          children: [
+            CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2),
+            const SlowHint(active: true),
+          ],
+        ),
       );
     }
     if (_errorMessage != null) {
@@ -390,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _warrantyLine(product),
+                    warrantyLine(product),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
@@ -403,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
               Padding(
                 padding: const EdgeInsets.only(top: 5),
                 child: Text(
-                  '₹${_inr(product.price!)}',
+                  '₹${formatInr(product.price!)}',
                   style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w800),
                 ),
               ),

@@ -36,15 +36,12 @@ class DocumentSlotField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.ruleSoft, width: 0.8))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
-          ),
+          Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           if (value == null) _buildPickRow(context) else _buildPicked(context),
         ],
@@ -90,7 +87,7 @@ class DocumentSlotField extends StatelessWidget {
       onPressed: enabled ? onTap : null,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.textPrimary,
-        side: BorderSide(color: AppColors.ruleSoft),
+        side: BorderSide(color: AppColors.textPrimary, width: 0.8),
         padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
@@ -147,7 +144,7 @@ class DocumentSlotField extends StatelessWidget {
   void _showReplaceOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (sheetContext) => SafeArea(
         child: Column(

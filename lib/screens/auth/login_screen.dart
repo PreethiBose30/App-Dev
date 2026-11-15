@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/swiss.dart';
 import '../../services/auth_service.dart';
 import '../../services/api_client.dart';
 import '../dashboard/home_screen.dart';
@@ -51,106 +52,85 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Type your email above first, then tap Forgot password.')),
+      );
+      return;
+    }
+    try {
+      await AuthService.sendPasswordReset(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('If an account exists for $email, a reset link is on its way. Check spam too.')),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'DIGITAL VAULT',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 3.0, color: AppColors.textPrimary),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.asset('assets/icon/app_icon_tile.png', width: 52, height: 52),
+              const SizedBox(height: 40),
+              Text(
+                'Sign in',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 52, height: 1.0, fontWeight: FontWeight.w900, letterSpacing: -2.5),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Your bills, warranties and expiry dates, in one place.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+              ),
+              const SizedBox(height: 40),
+              Container(height: 1.5, color: AppColors.rule),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 17),
+                decoration: swissInput('Email'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 17),
+                decoration: swissInput('Password'),
+                onFieldSubmitted: (_) => _isSubmitting ? null : _login(),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _isSubmitting ? null : _forgotPassword,
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                  child: Text('Forgot password?', style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w700)),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Secure document repository infrastructure.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 44),
-
-                Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface, // Charcoal Card
-                    borderRadius: BorderRadius.zero,
-                    border: Border.all(color: Colors.white.withOpacity(0.04)),
-                  ),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
-                        decoration: InputDecoration(
-                          labelText: 'ACCESS IDENTITY / EMAIL',
-                          labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2),
-                          prefixIcon: Icon(Icons.shield_outlined, color: AppColors.textSecondary, size: 18),
-                          border: InputBorder.none,
-                          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white.withOpacity(0.08))),
-                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.textPrimary)),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
-                        decoration: InputDecoration(
-                          labelText: 'PASSWORD',
-                          labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.2),
-                          prefixIcon: Icon(Icons.lock_open_outlined, color: AppColors.textSecondary, size: 18),
-                          border: InputBorder.none,
-                          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white.withOpacity(0.08))),
-                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.textPrimary)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 36),
-
-                ElevatedButton(
-                  onPressed: _isSubmitting ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.textPrimary, // Ivory Fill
-                    foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                  ),
-                  child: _isSubmitting
-                      ? SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
-                        )
-                      : const Text('AUTHORIZE ACCESS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
-                ),
-                const SizedBox(height: 24),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignupScreen(),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    "CREATE SYSTEM ACCOUNT",
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.2),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              SwissButton('Sign in', onPressed: _login, loading: _isSubmitting),
+              SlowHint(active: _isSubmitting, text: 'Waking up the server. The first sign-in can take up to a minute.'),
+              const SizedBox(height: 12),
+              SwissButton(
+                'Create an account',
+                outlined: true,
+                onPressed: _isSubmitting
+                    ? null
+                    : () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SignupScreen())),
+              ),
+            ],
           ),
         ),
       ),

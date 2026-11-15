@@ -68,7 +68,7 @@ An asset can have **any number** of documents attached (a receipt, a warranty ca
 
 This is what lets the Flutter app capture a document offline, save it locally, and safely retry the upload as many times as it needs to once connectivity returns.
 
-Files are stored on disk under `backend/uploads/<userId>/<randomly-generated-name>.<ext>` -- the on-disk name is unrelated to `localId` or the original filename (recorded separately as `storedFilename` on the document, an internal detail the API never exposes).
+Files are stored **in MongoDB (GridFS, bucket `document_files`)**, not on the server's disk, so they survive restarts and redeploys on hosts with an ephemeral filesystem (e.g. Render's free plan). Each file gets a random stored name unrelated to `localId` or the original filename. Documents uploaded before this change (stored under `backend/uploads/<userId>/`) are still served from disk if the file is still there.
 
 ## Dashboard
 
@@ -104,7 +104,7 @@ FastAPI auto-generates OpenAPI docs at `/docs` (Swagger UI) and `/redoc` while t
 
 ## Known limitations
 
-- Document storage is local disk (`backend/uploads/`), not cloud object storage (S3/Cloudinary etc.) — fine for a single-instance deployment, but won't survive a stateless/multi-instance production setup without adding that later. Docker Compose mounts it as a named volume so it survives container restarts.
+- Document files live in the database (GridFS). That is durable, but it counts against the database's storage quota (512 MB on the Atlas free tier; each file is capped at 10 MB). A large deployment would move files to object storage (S3 etc.).
 - OCR (Google ML Kit) runs entirely on-device in Flutter; extracted text is not sent to or stored by the backend.
 
 ## Running with Docker
@@ -133,7 +133,7 @@ docker compose down             # stop and remove containers, KEEP all data
 | Data | Docker volume | Survives `restart` | Survives `down` + `up` | Survives rebuild |
 | --- | --- | --- | --- | --- |
 | Database (users, products, document records) | `backend_mongo-data` | yes | yes | yes |
-| Uploaded document files | `backend_uploads-data` | yes | yes | yes |
+| Uploaded document files (stored in the database) | `backend_mongo-data`, or Atlas if `MONGO_URI` points there | yes | yes | yes |
 
 Only `docker compose down -v` (note the `-v`) deletes the volumes, and with them all data. To reset on purpose: `docker compose down -v`.
 

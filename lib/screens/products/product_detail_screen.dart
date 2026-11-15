@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/format.dart';
+import '../../widgets/swiss.dart';
 import '../../theme/theme_controller.dart';
 import '../../models/product.dart';
 import '../../models/local_document.dart';
@@ -28,9 +30,7 @@ class ProductDetailScreen extends StatefulWidget {
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends State<ProductDetailScreen>
-    with SingleTickerProviderStateMixin, ThemeAwareState {
-  late TabController _tabController;
+class _ProductDetailScreenState extends State<ProductDetailScreen> with ThemeAwareState {
   bool _isDeleting = false;
   List<LocalDocument> _documents = [];
   StreamSubscription? _syncSub;
@@ -38,7 +38,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _loadDocuments();
     // Sync-status badges (pending/uploading/synced/failed) should update
     // on their own once a background sync pass touches this asset's
@@ -48,7 +47,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
     _syncSub?.cancel();
     super.dispose();
   }
@@ -74,12 +72,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     }
   }
 
-  String formatDate(DateTime? date) {
-    if (date == null) return 'Not added';
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
-  }
+  String formatDate(DateTime? date) => date == null ? 'Not added' : dayMonthYear(date);
 
   bool get isWarrantyActive {
     if (widget.product.warrantyExpiry == null) return false;
@@ -209,348 +202,180 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   @override
   Widget build(BuildContext context) {
     final Product product = widget.product;
+    final expiry = product.warrantyExpiry;
+    final soon = isWarrantyActive && remainingDays <= 30;
+
+    String statusText;
+    if (expiry == null) {
+      statusText = 'No warranty date';
+    } else if (!isWarrantyActive) {
+      statusText = 'Warranty expired ${dayMonthYear(expiry)}';
+    } else {
+      statusText = 'Warranty to ${monthYear(expiry)} · $remainingDays ${remainingDays == 1 ? 'day' : 'days'} left';
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Product Details', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+      appBar: swissAppBar(
+        context,
+        'Product',
         actions: [
           IconButton(
-            icon: Icon(Icons.edit_outlined, color: AppColors.textPrimary),
+            tooltip: 'Edit',
+            icon: Icon(Icons.edit_outlined, color: AppColors.textPrimary, size: 22),
             onPressed: _isDeleting ? null : _editProduct,
           ),
           IconButton(
+            tooltip: 'Delete',
             icon: _isDeleting
-                ? SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
-                  )
-                : Icon(Icons.delete_outline, color: AppColors.accent),
+                ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
+                : Icon(Icons.delete_outline, color: AppColors.accent, size: 22),
             onPressed: _isDeleting ? null : _deleteProduct,
           ),
         ],
       ),
-      body: Column(
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         children: [
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary.withOpacity(0.18), AppColors.surface],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.zero,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  height: 70,
-                  width: 70,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  child: Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 35),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: isWarrantyActive ? Colors.green.withOpacity(0.15) : Colors.red.withOpacity(0.15),
-                          borderRadius: BorderRadius.zero,
-                        ),
-                        child: Text(
-                          product.warrantyExpiry == null
-                              ? 'No warranty date'
-                              : isWarrantyActive
-                                  ? 'Warranty Active'
-                                  : 'Warranty Expired',
-                          style: TextStyle(
-                            color: isWarrantyActive ? Colors.green : Colors.red,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
-            child: TabBar(
-              controller: _tabController,
-              indicatorColor: AppColors.primary,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
-              tabs: const [
-                Tab(text: 'Details'),
-                Tab(text: 'Warranty'),
-                Tab(text: 'Files'),
-              ],
-            ),
+          Text(product.category, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          const SizedBox(height: 4),
+          Text(
+            product.name,
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 38, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.8),
           ),
           const SizedBox(height: 10),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildDetailsTab(product),
-                _buildWarrantyTab(product),
-                _buildFilesTab(),
-              ],
+          Text(
+            statusText,
+            style: TextStyle(
+              color: (soon || (expiry != null && !isWarrantyActive)) ? AppColors.accent : AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 24),
+          _statRow(product),
+          const SizedBox(height: 28),
+          const SwissLabel('Details'),
+          _detailRow('Brand', product.brand),
+          _detailRow('Model number', product.modelNumber),
+          _detailRow('Purchased', product.purchaseDate == null ? null : dayMonthYear(product.purchaseDate!)),
+          _detailRow('Warranty ends', expiry == null ? null : dayMonthYear(expiry)),
+          _detailRow('Service due', product.serviceDate == null ? null : dayMonthYear(product.serviceDate!)),
+          _detailRow('EMI due', product.emiDueDate == null ? null : dayMonthYear(product.emiDueDate!)),
+          _detailRow('Reminder', product.reminderEnabled ? 'On' : 'Off'),
+          _detailRow('Notes', (product.notes == null || product.notes!.trim().isEmpty) ? null : product.notes!.trim()),
+          const SizedBox(height: 28),
+          SwissLabel(
+            'Files',
+            trailing: GestureDetector(
+              onTap: widget.product.id == null ? null : _addDocument,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('Add', style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w700)),
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_forward, size: 15, color: AppColors.accent),
+              ]),
+            ),
+          ),
+          if (_documents.isEmpty)
+            const SwissMessage('No documents yet', body: 'Bills and warranty cards you add will show up here.')
+          else
+            for (final doc in _documents) _documentTile(doc),
         ],
       ),
     );
   }
 
-  Widget _buildDetailsTab(Product product) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Product Information',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 18),
-            _detailRow('Product Name', product.name),
-            _detailRow('Category', product.category),
-            if (product.brand != null) _detailRow('Brand', product.brand!),
-            if (product.modelNumber != null) _detailRow('Model Number', product.modelNumber!),
-            _detailRow('Price', product.price == null ? 'Not added' : '₹${product.price!.toStringAsFixed(2)}'),
-            _detailRow('Purchase Date', formatDate(product.purchaseDate)),
-            _detailRow('Warranty Expiry', formatDate(product.warrantyExpiry)),
-            _detailRow('Service Date', formatDate(product.serviceDate)),
-            _detailRow('EMI Due Date', formatDate(product.emiDueDate)),
-            _detailRow(
-              'Notes',
-              product.notes == null || product.notes!.trim().isEmpty ? 'No notes added' : product.notes!,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWarrantyTab(Product product) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Warranty Status',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 18),
-            _detailRow('Expires On', formatDate(product.warrantyExpiry)),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: product.warrantyExpiry == null
-                    ? AppColors.primary.withOpacity(0.1)
-                    : isWarrantyActive
-                        ? Colors.green.withOpacity(0.15)
-                        : Colors.red.withOpacity(0.15),
-                borderRadius: BorderRadius.zero,
+  /// Price / purchased / warranty-ends, in the same ruled three-cell row as Home.
+  Widget _statRow(Product product) {
+    Widget cell(String label, String value, {bool first = false}) {
+      return Expanded(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(first ? 0 : 12, 12, 8, 12),
+          decoration: BoxDecoration(
+            border: first ? null : Border(left: BorderSide(color: AppColors.rule, width: 0.8)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.4),
               ),
-              child: Text(
-                product.warrantyExpiry == null
-                    ? 'No warranty information'
-                    : isWarrantyActive
-                        ? '$remainingDays days remaining'
-                        : 'Warranty has expired',
-                style: TextStyle(
-                  color: product.warrantyExpiry == null
-                      ? AppColors.primary
-                      : isWarrantyActive
-                          ? Colors.green
-                          : Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilesTab() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: widget.product.id == null ? null : _addDocument,
-              icon: const Icon(Icons.add),
-              label: const Text('ADD DOCUMENT'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.primary),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              ),
-            ),
+              const SizedBox(height: 2),
+              Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            ],
           ),
         ),
-        Expanded(
-          child: _documents.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.folder_open_outlined, color: AppColors.textSecondary, size: 50),
-                      SizedBox(height: 14),
-                      Text('No documents added', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                      SizedBox(height: 6),
-                      Text(
-                        'Bills and warranty files will appear here',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                  itemCount: _documents.length,
-                  itemBuilder: (context, index) => _documentTile(_documents[index]),
-                ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.rule, width: 0.8),
+          bottom: BorderSide(color: AppColors.rule, width: 0.8),
         ),
-      ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            cell('Price', product.price == null ? '—' : formatPrice(product.price!), first: true),
+            cell('Purchased', product.purchaseDate == null ? '—' : monthYear(product.purchaseDate!)),
+            cell('Warranty', product.warrantyDuration == null ? '—' : '${product.warrantyDuration} mo'),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _documentTile(LocalDocument doc) {
-    final isImage = doc.mimeType.startsWith('image/');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.zero),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.12), borderRadius: BorderRadius.zero),
-            child: Icon(isImage ? Icons.image_outlined : Icons.picture_as_pdf_outlined, color: AppColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: InkWell(
-              onTap: () => _viewDocument(doc),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    doc.filename,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  _syncBadge(doc.syncStatus),
-                ],
-              ),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: AppColors.accent, size: 20),
-            onPressed: () => _deleteDocument(doc),
-          ),
-        ],
+    return SwissRow(
+      soft: true,
+      title: doc.filename,
+      subtitle: _syncLabel(doc.syncStatus),
+      onTap: () => _viewDocument(doc),
+      trailing: IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        tooltip: 'Remove',
+        icon: Icon(Icons.close, color: AppColors.textSecondary, size: 20),
+        onPressed: () => _deleteDocument(doc),
       ),
     );
   }
 
-  Widget _syncBadge(DocumentSyncStatus status) {
-    late final String label;
-    late final Color color;
-    late final IconData icon;
-
+  String _syncLabel(DocumentSyncStatus status) {
     switch (status) {
       case DocumentSyncStatus.synced:
-        label = 'Synced';
-        color = Colors.green;
-        icon = Icons.check_circle_outline;
-        break;
+        return 'Synced';
       case DocumentSyncStatus.uploading:
-        label = 'Syncing…';
-        color = AppColors.primary;
-        icon = Icons.sync;
-        break;
+        return 'Syncing…';
       case DocumentSyncStatus.pending:
-        label = 'Pending';
-        color = AppColors.accent;
-        icon = Icons.schedule;
-        break;
+        return 'Waiting to upload';
       case DocumentSyncStatus.failed:
-        label = 'Sync failed';
-        color = AppColors.accent;
-        icon = Icons.error_outline;
-        break;
+        return 'Sync failed, will retry';
       case DocumentSyncStatus.deleted:
-        label = 'Deleting…';
-        color = AppColors.textSecondary;
-        icon = Icons.delete_outline;
-        break;
+        return 'Deleting…';
     }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 13),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
-      ],
-    );
   }
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
+  /// Label on the left, value on the right, hairline below. Rows with no
+  /// value are left out entirely instead of showing "Not added".
+  Widget _detailRow(String label, String? value) {
+    if (value == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.ruleSoft, width: 0.8))),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-          const SizedBox(height: 5),
-          Text(value, style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+          SizedBox(width: 130, child: Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 14))),
+          Expanded(
+            child: Text(value, style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );

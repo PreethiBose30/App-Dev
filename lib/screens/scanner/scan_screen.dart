@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/swiss.dart';
 import 'package:image_picker/image_picker.dart';
 import 'result_screen.dart';
 import '../dashboard/add_product_screen.dart';
@@ -95,190 +96,41 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: IconThemeData(
-          color: AppColors.textPrimary,
-        ),
-        title: Text(
-          'ADD PRODUCT',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ),
-
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-
-        child: Column(
+      appBar: swissAppBar(context, 'Add product'),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
           children: [
-            const SizedBox(height: 40),
-
-            Container(
-              width: double.infinity,
-              height: 250,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.zero,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.08),
-                ),
-              ),
-
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.document_scanner_outlined,
-                    size: 70,
-                    color: AppColors.textPrimary,
-                  ),
-
-                  SizedBox(height: 20),
-
-                  Text(
-                    'ADD A PRODUCT',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-
-                  SizedBox(height: 8),
-
-                  Text(
-                    'Scan a document or enter details manually',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            SizedBox(
-              width: double.infinity,
-
-              child: ElevatedButton.icon(
-                onPressed: _isProcessing ? null : () => _pickImage(ImageSource.camera),
-
-                icon: const Icon(
-                  Icons.camera_alt_outlined,
-                ),
-
-                label: Text(
-                  _isProcessing
-                      ? 'PROCESSING...'
-                      : 'SCAN WITH CAMERA',
-                ),
-
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textPrimary,
-                  foregroundColor: AppColors.background,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            SizedBox(
-              width: double.infinity,
-
-              child: OutlinedButton.icon(
-                onPressed: _isProcessing ? null : () => _pickImage(ImageSource.gallery),
-
-                icon: const Icon(
-                  Icons.photo_library_outlined,
-                ),
-
-                label: const Text(
-                  'SCAN FROM GALLERY',
-                ),
-
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textPrimary,
-
-                  side: BorderSide(
-                    color: AppColors.textSecondary,
-                  ),
-
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 18,
-                  ),
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            SizedBox(
-              width: double.infinity,
-
-              child: OutlinedButton.icon(
-                onPressed: _openAddProduct,
-
-                icon: const Icon(
-                  Icons.edit_outlined,
-                ),
-
-                label: const Text(
-                  'ADD MANUALLY',
-                ),
-
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textPrimary,
-
-                  side: BorderSide(
-                    color: AppColors.textSecondary,
-                  ),
-
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 18,
-                  ),
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                ),
-              ),
-            ),
-
-            const Spacer(),
-
             Text(
-              'Scan bills, warranty cards, insurance papers, '
-                  'or add product information manually.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-                height: 1.5,
-              ),
+              'Scan a bill or\nenter it yourself.',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 38, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.8),
             ),
-
-            const SizedBox(height: 28),
+            const SizedBox(height: 14),
+            Text(
+              'Scanning reads the text off a bill, warranty card or insurance paper so you can copy details from it.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 15, height: 1.4),
+            ),
+            const SizedBox(height: 36),
+            SwissButton(
+              'Scan with camera',
+              icon: Icons.camera_alt_outlined,
+              loading: _isProcessing,
+              onPressed: () => _pickImage(ImageSource.camera),
+            ),
+            const SizedBox(height: 12),
+            SwissButton(
+              'Scan from gallery',
+              icon: Icons.photo_library_outlined,
+              outlined: true,
+              onPressed: _isProcessing ? null : () => _pickImage(ImageSource.gallery),
+            ),
+            const SizedBox(height: 12),
+            SwissButton(
+              'Add manually',
+              icon: Icons.edit_outlined,
+              outlined: true,
+              onPressed: _isProcessing ? null : _openAddProduct,
+            ),
           ],
         ),
       ),

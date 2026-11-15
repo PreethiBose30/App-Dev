@@ -1,10 +1,12 @@
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from gridfs.errors import NoFile
 from pymongo.errors import DuplicateKeyError
 
 from .. import config, database
@@ -19,8 +21,15 @@ def _disk_path(doc: dict) -> Path:
 
 
 async def delete_file_for_doc(doc: dict) -> None:
-    path = _disk_path(doc)
-    path.unlink(missing_ok=True)
+    file_id = doc.get("fileId")
+    if file_id is not None:
+        try:
+            await database.files_bucket().delete(file_id)
+        except NoFile:
+            pass
+        return
+    # Legacy document from before files moved into the database.
+    _disk_path(doc).unlink(missing_ok=True)
 
 
 # @route   POST /api/v1/assets/{assetId}/documents
@@ -52,9 +61,14 @@ async def upload_document(
 
     ext = config.ALLOWED_UPLOAD_TYPES[document.content_type]
     stored_filename = f"{uuid.uuid4()}{ext}"
-    user_dir = config.UPLOAD_ROOT / user.id
-    user_dir.mkdir(parents=True, exist_ok=True)
-    (user_dir / stored_filename).write_bytes(body)
+    # Stored in MongoDB (GridFS), not on local disk: free hosts wipe the
+    # disk on every restart/redeploy, the database is the durable store.
+    bucket = database.files_bucket()
+    file_id = await bucket.upload_from_stream(
+        stored_filename,
+        body,
+        metadata={"user": ObjectId(user.id), "asset": asset["_id"], "contentType": document.content_type},
+    )
 
     now = datetime.now(timezone.utc)
     doc = {
@@ -66,6 +80,7 @@ async def upload_document(
         "size": len(body),
         "checksum": checksum,
         "storedFilename": stored_filename,
+        "fileId": file_id,
         "createdAt": now,
         "updatedAt": now,
     }
@@ -78,7 +93,10 @@ async def upload_document(
         # raced to insert -- the unique index let only one through. The
         # loser cleans up its now-orphaned file and returns the winner's
         # document, same as the pre-check path above.
-        (user_dir / stored_filename).unlink(missing_ok=True)
+        try:
+            await bucket.delete(file_id)
+        except NoFile:
+            pass
         winner = await database.db.documents.find_one({"user": ObjectId(user.id), "localId": localId})
         return {"message": "Document already synced", "document": serialize_document(winner)}
 
@@ -104,6 +122,17 @@ async def get_document(document_id: str, user: CurrentUser = Depends(get_current
 @router.get("/documents/{document_id}/download")
 async def download_document(document_id: str, user: CurrentUser = Depends(get_current_user)):
     doc = await load_owned("documents", to_object_id(document_id), user, "Document not found")
+    file_id = doc.get("fileId")
+    if file_id is not None:
+        try:
+            stream = await database.files_bucket().open_download_stream(file_id)
+            data = await stream.read()
+        except NoFile:
+            raise HTTPException(status_code=404, detail="Document file is missing on the server")
+        disposition = f"attachment; filename*=UTF-8''{quote(doc['filename'])}"
+        return Response(content=data, media_type=doc["mimeType"], headers={"Content-Disposition": disposition})
+
+    # Legacy document from before files moved into the database.
     path = _disk_path(doc)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Document file is missing on the server")

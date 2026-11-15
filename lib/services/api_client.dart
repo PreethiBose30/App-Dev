@@ -55,10 +55,10 @@ class ApiClient {
   /// interface up" -- a phone can be on Wi-Fi with no route to this
   /// specific backend (captive portal, VPN, server down, wrong LAN). Short
   /// timeout so a dead server doesn't hang whatever's waiting on this.
-  static Future<bool> pingBackend() async {
+  static Future<bool> pingBackend({Duration timeout = const Duration(seconds: 4)}) async {
     try {
       final healthUrl = Uri.parse(baseUrl).replace(path: '/api/health');
-      final response = await http.get(healthUrl).timeout(const Duration(seconds: 4));
+      final response = await http.get(healthUrl).timeout(timeout);
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (_) {
       return false;
@@ -104,9 +104,12 @@ class ApiClient {
     throw ApiException(response.statusCode, message);
   }
 
-  static Future<dynamic> get(String path, {Map<String, dynamic>? query, bool auth = true}) async {
+  /// [timeout] is optional: when it elapses the call fails like any other
+  /// network error (ApiException with statusCode 0).
+  static Future<dynamic> get(String path, {Map<String, dynamic>? query, bool auth = true, Duration? timeout}) async {
     try {
-      final response = await http.get(_uri(path, query), headers: await _headers(withAuth: auth));
+      final request = http.get(_uri(path, query), headers: await _headers(withAuth: auth));
+      final response = await (timeout == null ? request : request.timeout(timeout));
       return _handle(response);
     } on ApiException {
       rethrow;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/swiss.dart';
 import '../../theme/theme_controller.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -60,262 +60,58 @@ class _ProfileScreenState extends State<ProfileScreen> with ThemeAwareState {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-
-        title: Text(
-          'PROFILE',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ),
-
+      appBar: swissAppBar(context, 'Profile'),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(22),
-
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.zero,
-
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.05),
-                  ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+          children: [
+            Text(
+              user?.name ?? 'Unknown user',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 40, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.8),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Flexible(
+                  child: Text(user?.email ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                 ),
-
-                child: Row(
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        shape: BoxShape.circle,
-                      ),
-
-                      child: Icon(
-                        Icons.person_outline,
-                        color: AppColors.onAccent,
-                        size: 32,
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-
-                      children: [
-                        Text(
-                          user?.name ?? 'Unknown user',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-                          user?.email ?? '',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-
-                        if (user?.isAdmin == true) ...[
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.zero,
-                            ),
-                            child: Text(
-                              'ADMIN',
-                              style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              Text(
-                'ACCOUNT',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              _ProfileOption(
-                icon: Icons.person_outline,
-                title: 'Edit Profile',
-                subtitle: 'Update your personal information',
-                onTap: _editProfile,
-              ),
-
-              _ProfileOption(
-                icon: Icons.notifications_none_outlined,
-                title: 'Notifications',
-                subtitle: 'Manage your reminder preferences',
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen())),
-              ),
-
-              _ProfileOption(
-                icon: Icons.palette_outlined,
-                title: 'Appearance',
-                subtitle: 'Customize your app experience',
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AppearanceSettingsScreen())),
-              ),
-
-              const SizedBox(height: 24),
-
-              Text(
-                'ABOUT',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              _ProfileOption(
-                icon: Icons.info_outline,
-                title: 'About',
-                subtitle: 'The app, its makers and RoboVITics',
-                onTap: _showAbout,
-              ),
-
-              const SizedBox(height: 30),
-
-              SizedBox(
-                width: double.infinity,
-
-                child: OutlinedButton.icon(
-                  onPressed: () => _logout(context),
-
-                  icon: const Icon(
-                    Icons.logout,
-                    size: 18,
-                  ),
-
-                  label: const Text('LOG OUT'),
-
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.accent,
-
-                    side: BorderSide(
-                      color: AppColors.accent.withOpacity(0.4),
-                    ),
-
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                    ),
-
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+                if (user?.isAdmin == true) ...[
+                  const SizedBox(width: 10),
+                  Text('Admin', style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w800)),
+                ],
+              ],
+            ),
+            const SizedBox(height: 32),
+            const SwissLabel('Account'),
+            _option('Edit profile', 'Change your name', _editProfile),
+            _option(
+              'Notifications',
+              'Reminder lead time and permission',
+              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen())),
+            ),
+            _option(
+              'Appearance',
+              'Light, dark or system',
+              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AppearanceSettingsScreen())),
+            ),
+            const SizedBox(height: 28),
+            const SwissLabel('About'),
+            _option('About', 'The app, its makers and RoboVITics', _showAbout),
+            const SizedBox(height: 36),
+            SwissButton('Log out', outlined: true, onPressed: () => _logout(context)),
+          ],
         ),
       ),
     );
   }
-}
 
-class _ProfileOption extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ProfileOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        vertical: 6,
-      ),
-
-      leading: Container(
-        padding: const EdgeInsets.all(11),
-
-        decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.10),
-          borderRadius: BorderRadius.zero,
-        ),
-
-        child: Icon(
-          icon,
-          color: AppColors.primary,
-          size: 21,
-        ),
-      ),
-
-      title: Text(
-        title,
-
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-
-      subtitle: Text(
-        subtitle,
-
-        style: TextStyle(
-          color: AppColors.textSecondary,
-          fontSize: 11,
-        ),
-      ),
-
-      trailing: Icon(
-        Icons.chevron_right,
-        color: AppColors.textSecondary,
-      ),
-
+  Widget _option(String title, String subtitle, VoidCallback onTap) {
+    return SwissRow(
+      soft: true,
+      title: title,
+      subtitle: subtitle,
       onTap: onTap,
+      trailing: Icon(Icons.arrow_forward, color: AppColors.textPrimary, size: 18),
     );
   }
 }
