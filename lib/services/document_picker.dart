@@ -46,7 +46,8 @@ class DocumentPicker {
     try {
       final shot = await ImagePicker().pickImage(source: source, imageQuality: 85);
       if (shot == null) return null; // user cancelled -- not an error
-      return PickedDocument(file: File(shot.path), mimeType: 'image/jpeg');
+      // Gallery picks can be PNGs; label them by what the file actually is.
+      return PickedDocument(file: File(shot.path), mimeType: mimeTypeForPath(shot.path));
     } catch (e) {
       // Covers permission denied, permission permanently denied, and
       // camera-unavailable -- image_picker surfaces all of these as

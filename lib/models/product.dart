@@ -53,6 +53,10 @@ class Product {
     return parsed.toLocal();
   }
 
+  /// The server reports "no warranty" as 0 months; in the app that is simply
+  /// no value.
+  static int? _positiveOrNull(int? months) => (months == null || months <= 0) ? null : months;
+
   static String _dateOnly(DateTime d) => DateTime.utc(d.year, d.month, d.day).toIso8601String();
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -64,7 +68,7 @@ class Product {
       modelNumber: json['modelNumber'] as String?,
       price: (json['price'] as num?)?.toDouble(),
       purchaseDate: parseDate(json['purchaseDate']),
-      warrantyDuration: (json['warrantyDurationMonths'] as num?)?.toInt(),
+      warrantyDuration: _positiveOrNull((json['warrantyDurationMonths'] as num?)?.toInt()),
       warrantyExpiry: parseDate(json['warrantyExpiry']),
       emiDueDate: parseDate(json['emiDueDate']),
       serviceDate: parseDate(json['serviceDate']),
