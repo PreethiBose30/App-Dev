@@ -52,14 +52,19 @@ class _ScanScreenState extends State<ScanScreen> {
 
       if (!mounted) return;
 
-      Navigator.push(
+      final imagePath = image.path;
+      final saved = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
           builder: (context) => ResultScreen(
             extractedText: extractedText,
+            imagePath: imagePath,
           ),
         ),
       );
+      // A product was saved from the scan: this screen has done its job,
+      // go back to Home instead of leaving the user on the scan menu.
+      if (saved == true && mounted) Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
 
@@ -78,12 +83,13 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _openAddProduct() async {
-    await Navigator.push(
+    final saved = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const AddProductScreen(),
       ),
     );
+    if (saved == true && mounted) Navigator.pop(context);
   }
 
   @override

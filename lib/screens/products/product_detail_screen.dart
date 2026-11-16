@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/swiss.dart';
@@ -13,7 +14,6 @@ import '../../services/document_repository.dart';
 import '../../services/document_service.dart';
 import '../../services/connectivity_service.dart';
 import '../../services/sync_service.dart';
-import '../../services/recent_service.dart';
 import '../../services/notification_service.dart';
 import '../dashboard/add_product_screen.dart';
 import '../scanner/document_capture_screen.dart';
@@ -80,8 +80,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with ThemeAwa
   }
 
   int get remainingDays {
-    if (widget.product.warrantyExpiry == null) return 0;
-    return widget.product.warrantyExpiry!.difference(DateTime.now()).inDays;
+    final expiry = widget.product.warrantyExpiry;
+    if (expiry == null) return 0;
+    // Whole calendar days from today to the end date. Counting elapsed
+    // 24-hour blocks instead would show "0 days left" for a warranty that
+    // still runs until tomorrow.
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final end = DateTime(expiry.year, expiry.month, expiry.day);
+    return (end.difference(today).inHours / 24).round();
   }
 
   Future<void> _editProduct() async {
@@ -150,22 +157,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with ThemeAwa
         );
         return;
       }
-      RecentService.addRecent(doc.filename, 'File', widget.product.name);
       if (!mounted) return;
 
       if (doc.mimeType.startsWith('image/')) {
         await Navigator.push(context, MaterialPageRoute(builder: (context) => _ImageViewerScreen(file: file)));
       } else {
+        // PDFs open in whatever PDF viewer the phone has. If there is none
+        // (or the hand-off fails), say so instead of doing nothing.
+        final result = await OpenFilex.open(file.path, type: doc.mimeType);
+        if (result.type == ResultType.done || !mounted) return;
         final bytes = await file.length();
         if (!mounted) return;
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: AppColors.surface,
-            title: Text('Document available offline', style: TextStyle(color: AppColors.textPrimary)),
+            title: Text('Could not open the PDF', style: TextStyle(color: AppColors.textPrimary)),
             content: Text(
-              '${doc.filename} (${(bytes / 1024).toStringAsFixed(0)} KB) is saved on this device.\n\n'
-              'In-app PDF preview isn\'t built yet -- this confirms the file is really stored locally and can be opened even without internet.',
+              result.type == ResultType.noAppToOpen
+                  ? '${doc.filename} (${(bytes / 1024).toStringAsFixed(0)} KB) is saved on this phone, but no app that can show PDFs is installed. Install a PDF viewer and try again.'
+                  : '${doc.filename} (${(bytes / 1024).toStringAsFixed(0)} KB) is saved on this phone, but it could not be handed to a PDF viewer.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
             actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],

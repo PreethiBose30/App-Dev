@@ -51,6 +51,7 @@ dependencies:
   package_info_plus: ^8.0.0
   firebase_core: ^4.15.0
   firebase_auth: ^6.7.0
+  open_filex: ^5.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

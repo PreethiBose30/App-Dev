@@ -34,7 +34,16 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> with Th
       _errorMessage = null;
     });
     try {
-      final result = await AssetRepository.getAssets(category: widget.categoryName);
+      List<Product> result;
+      if (widget.categoryName.toLowerCase() == 'other') {
+        // "Other" is everything outside the named categories, which the
+        // server cannot filter for, so it is picked out of the full list.
+        const named = {'phone', 'laptop', 'tv', 'car', 'appliance', 'furniture'};
+        final all = await AssetRepository.getAssets();
+        result = all.where((p) => !named.contains(p.category.trim().toLowerCase())).toList();
+      } else {
+        result = await AssetRepository.getAssets(category: widget.categoryName);
+      }
       if (!mounted) return;
       setState(() {
         categoryProducts = result;

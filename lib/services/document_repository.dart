@@ -90,6 +90,30 @@ class DocumentRepository {
     if (userId == null) return;
     final box = HiveService.documentsBox;
 
+    // A document this phone has as "synced" that the server no longer
+    // lists was removed from another phone: drop it here too. The grace
+    // period skips anything this phone finished uploading moments ago,
+    // which a list fetched just before that would not include yet.
+    final remoteIds = {for (final r in remoteDocs) r.id};
+    final cutoff = DateTime.now().subtract(const Duration(minutes: 2));
+    final gone = box.values
+        .where((d) =>
+            d.ownerUserId == userId &&
+            d.assetId == assetId &&
+            d.syncStatus == DocumentSyncStatus.synced &&
+            d.serverId != null &&
+            !remoteIds.contains(d.serverId) &&
+            d.updatedAt.isBefore(cutoff))
+        .toList();
+    for (final doc in gone) {
+      final path = doc.localFilePath;
+      if (path != null) {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      }
+      await doc.delete();
+    }
+
     for (final remote in remoteDocs) {
       final alreadyKnown = box.values.any(
         (d) => d.ownerUserId == userId && (d.localId == remote.localId || d.serverId == remote.id),

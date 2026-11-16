@@ -42,10 +42,12 @@ The person must sign out and in again (or wait up to an hour) for the claim to a
 | GET | `/assets?search=&category=` | Bearer | owner only | optional `search` (matches name/brand/model), `category` |
 | GET | `/assets/:id` | Bearer | owner only | — |
 | POST | `/assets` | Bearer | any user | `{ name*, category, brand, modelNumber, price, purchaseDate, warrantyDurationMonths, serviceDate, notes, reminderEnabled }` (`*` required) |
-| PUT | `/assets/:id` | Bearer | owner only | any subset of the same fields |
+| PUT | `/assets/:id` | Bearer | owner only | any subset of the same fields. A field left out is unchanged; an optional field sent as `null` is removed |
 | DELETE | `/assets/:id` | Bearer | owner only | cascades: deletes every document attached to this asset (records + files) |
 
 `warrantyExpiry` is computed server-side from `purchaseDate` + `warrantyDurationMonths` and returned on every asset; it is not client-settable.
+
+`purchaseDate` and `serviceDate` are calendar dates: send them as UTC midnight of the day (`2026-05-01T00:00:00Z`). The month arithmetic for `warrantyExpiry` is done on that value, so a time-of-day or local offset would shift the result.
 
 ## Documents (scanned bills, warranty cards, etc.)
 

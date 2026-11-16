@@ -110,7 +110,7 @@ class DocumentSlotField extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.12),
+            color: AppColors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.zero,
           ),
           clipBehavior: Clip.antiAlias,

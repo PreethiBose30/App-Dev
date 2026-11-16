@@ -20,7 +20,12 @@ class AddProductScreen extends StatefulWidget {
   /// extracted document text isn't just shown once and discarded.
   final String? initialNotes;
 
-  const AddProductScreen({super.key, this.existing, this.initialNotes});
+  /// Optional prefill for the invoice slot -- the photo the OCR scan flow
+  /// just read, so the scanned bill is kept with the product instead of
+  /// only its text.
+  final PickedDocument? initialInvoice;
+
+  const AddProductScreen({super.key, this.existing, this.initialNotes, this.initialInvoice});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -30,7 +35,7 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
   late final _nameController = TextEditingController(text: widget.existing?.name ?? '');
   late final _brandController = TextEditingController(text: widget.existing?.brand ?? '');
   late final _modelController = TextEditingController(text: widget.existing?.modelNumber ?? '');
-  late final _priceController = TextEditingController(text: widget.existing?.price?.toString() ?? '');
+  late final _priceController = TextEditingController(text: _priceText(widget.existing?.price));
   late final _warrantyController = TextEditingController(text: widget.existing?.warrantyDuration?.toString() ?? '');
   late final _notesController = TextEditingController(text: widget.existing?.notes ?? widget.initialNotes ?? '');
 
@@ -45,7 +50,13 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
   // Optional document slots -- only offered when creating a new product
   // (editing manages documents from the product's Files tab instead).
   PickedDocument? _warrantyCardDoc;
-  PickedDocument? _invoiceDoc;
+  late PickedDocument? _invoiceDoc = widget.initialInvoice;
+
+  /// 55000.0 -> "55000", 1234.5 -> "1234.5" (no trailing ".0" in the field).
+  static String _priceText(double? price) {
+    if (price == null) return '';
+    return price == price.roundToDouble() ? price.toStringAsFixed(0) : price.toString();
+  }
 
   bool get _isEditing => widget.existing != null;
 
@@ -60,9 +71,12 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
   ];
 
   Future<void> _pickDate({required bool isPurchaseDate}) async {
+    // Drop focus first: otherwise the last text field takes it back when
+    // the dialog closes and the keyboard jumps up over the form.
+    FocusManager.instance.primaryFocus?.unfocus();
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: (isPurchaseDate ? _purchaseDate : _serviceDate) ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2050),
       builder: (context, child) {
@@ -74,6 +88,13 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
               onPrimary: AppColors.onAccent,
               surface: AppColors.background,
               onSurface: AppColors.textPrimary,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: AppColors.background,
+              surfaceTintColor: Colors.transparent,
+              headerBackgroundColor: AppColors.background,
+              headerForegroundColor: AppColors.textPrimary,
+              shape: Border.all(color: AppColors.textPrimary, width: 1.2),
             ),
           ),
           child: child!,
@@ -100,10 +121,34 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
       return;
     }
 
+    // Typed numbers are checked up front: a value that cannot be read used
+    // to be dropped silently, saving the product without it.
+    final priceText = _priceController.text.trim().replaceAll(',', '');
+    final double? price = priceText.isEmpty ? null : double.tryParse(priceText);
+    if (priceText.isNotEmpty && (price == null || price < 0 || !price.isFinite)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter the price as a number, for example 54999')),
+      );
+      return;
+    }
+    final warrantyText = _warrantyController.text.trim();
+    final int? warrantyMonths = warrantyText.isEmpty ? null : int.tryParse(warrantyText);
+    if (warrantyText.isNotEmpty && (warrantyMonths == null || warrantyMonths < 0 || warrantyMonths > 600)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter the warranty length in whole months, for example 12')),
+      );
+      return;
+    }
+    if (warrantyMonths != null && warrantyMonths > 0 && _purchaseDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add the purchase date so the warranty end date can be worked out')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
-      final int? warrantyMonths = int.tryParse(_warrantyController.text.trim());
 
       final product = Product(
         id: widget.existing?.id,
@@ -111,7 +156,7 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
         category: _selectedCategory,
         brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
         modelNumber: _modelController.text.trim().isEmpty ? null : _modelController.text.trim(),
-        price: double.tryParse(_priceController.text.trim()),
+        price: price,
         purchaseDate: _purchaseDate,
         warrantyDuration: (warrantyMonths == null || warrantyMonths == 0) ? null : warrantyMonths,
         serviceDate: _serviceDate,
@@ -207,16 +252,19 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
     TextInputType? keyboardType,
     String? hint,
     String? prefixText,
+    int maxLines = 1,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      minLines: 1,
+      maxLines: maxLines,
       style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
       decoration: swissInput(label, hint: hint, prefixText: prefixText),
     );
   }
 
-  Widget _dateTile({required String title, required DateTime? date, required VoidCallback onTap}) {
+  Widget _dateTile({required String title, required DateTime? date, required VoidCallback onTap, VoidCallback? onClear}) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -241,6 +289,14 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
                 ],
               ),
             ),
+            if (date != null && onClear != null)
+              IconButton(
+                tooltip: 'Clear date',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                icon: Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                onPressed: onClear,
+              ),
             Icon(Icons.calendar_month_outlined, color: AppColors.textPrimary, size: 20),
           ],
         ),
@@ -288,12 +344,13 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
               const SizedBox(height: 8),
               _textField(controller: _modelController, label: 'Model number'),
               const SizedBox(height: 8),
-              _textField(controller: _priceController, label: 'Price (optional)', keyboardType: TextInputType.number, prefixText: '₹ '),
+              _textField(controller: _priceController, label: 'Price (optional)', keyboardType: const TextInputType.numberWithOptions(decimal: true), prefixText: '₹ '),
               _section('Warranty'),
               _dateTile(
                 title: 'Purchase date',
                 date: _purchaseDate,
                 onTap: () => _pickDate(isPurchaseDate: true),
+                onClear: () => setState(() => _purchaseDate = null),
               ),
               const SizedBox(height: 8),
               _textField(
@@ -306,9 +363,10 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
                 title: 'Next service date (optional)',
                 date: _serviceDate,
                 onTap: () => _pickDate(isPurchaseDate: false),
+                onClear: () => setState(() => _serviceDate = null),
               ),
               const SizedBox(height: 8),
-              _textField(controller: _notesController, label: 'Notes (optional)'),
+              _textField(controller: _notesController, label: 'Notes (optional)', keyboardType: TextInputType.multiline, maxLines: 6),
               _section('Documents'),
               if (_isEditing)
                 Padding(
@@ -340,9 +398,10 @@ class _AddProductScreenState extends State<AddProductScreen> with ThemeAwareStat
                   if (!value) return;
                   // Android 13+ needs the user's permission before any
                   // notification can show; ask at the moment they opt in.
+                  final messenger = ScaffoldMessenger.of(context);
                   final granted = await NotificationService.requestPermission();
                   if (!granted && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('Notifications are blocked. Allow them in Settings to get reminders.')),
                     );
                   }

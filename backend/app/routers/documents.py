@@ -55,6 +55,9 @@ async def upload_document(
     if existing:
         return {"message": "Document already synced", "document": serialize_document(existing)}
 
+    # Reject an oversized upload before pulling it into memory.
+    if document.size is not None and document.size > config.MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="File is too large (max 10MB)")
     body = await document.read()
     if len(body) > config.MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=400, detail="File is too large (max 10MB)")

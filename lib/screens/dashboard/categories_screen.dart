@@ -62,8 +62,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> with ThemeAwareStat
   }
 
   int getCategoryCount(String categoryName) {
+    final wanted = categoryName.trim().toLowerCase();
+    final known = {for (final c in categories) (c['name'] as String).toLowerCase()};
     return products.where((product) {
-      return product.category.trim().toLowerCase() == categoryName.trim().toLowerCase();
+      final category = product.category.trim().toLowerCase();
+      // "Other" also collects anything saved under a category this list
+      // does not have, so no product is ever missing from every row.
+      if (wanted == 'other') return category == 'other' || !known.contains(category);
+      return category == wanted;
     }).length;
   }
 

@@ -77,6 +77,13 @@ app.include_router(dashboard.router)
 
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc):
+    # A status-code handler takes priority over the HTTPException handler
+    # above, so this also receives every 404 a route raises on purpose
+    # ("Asset not found"). Keep those messages; only an unknown URL (whose
+    # detail is the framework default) gets the "Route not found" wording.
+    detail = getattr(exc, "detail", None)
+    if detail and detail != "Not Found":
+        return JSONResponse(status_code=404, content={"message": detail})
     return JSONResponse(status_code=404, content={"message": f"Route not found: {request.method} {request.url.path}"})
 
 

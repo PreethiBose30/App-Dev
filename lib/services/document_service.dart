@@ -20,6 +20,7 @@ class DocumentService {
     required String filePath,
     required String mimeType,
     String? checksum,
+    String? filename,
   }) async {
     final data = await ApiClient.uploadFile(
       '/assets/$assetId/documents',
@@ -27,6 +28,7 @@ class DocumentService {
       fieldName: 'document',
       fields: {'localId': localId, if (checksum != null) 'checksum': checksum},
       contentType: mimeType,
+      filename: filename,
     );
     return RemoteDocument.fromJson(data['document'] as Map<String, dynamic>);
   }

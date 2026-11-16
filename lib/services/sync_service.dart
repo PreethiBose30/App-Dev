@@ -23,9 +23,23 @@ class SyncService {
   static Stream<void> get onSyncEvent => _eventsController.stream;
 
   static void startAutoSync() {
+    _recoverInterruptedUploads();
     _connectivitySub ??= ConnectivityService.onStatusChange.listen((online) {
       if (online) syncAll();
     });
+  }
+
+  /// An upload that was in flight when the app was closed or killed is left
+  /// marked "uploading" with nothing actually uploading it. Called once at
+  /// startup (nothing can be in flight yet) to put those back in the queue;
+  /// re-sending is safe because uploads are idempotent on localId.
+  static void _recoverInterruptedUploads() {
+    for (final doc in HiveService.documentsBox.values.toList()) {
+      if (doc.syncStatus == DocumentSyncStatus.uploading) {
+        doc.syncStatus = DocumentSyncStatus.pending;
+        doc.save();
+      }
+    }
   }
 
   static void stopAutoSync() {
@@ -47,11 +61,15 @@ class SyncService {
 
       final docs = HiveService.documentsBox.values.where((d) => d.ownerUserId == userId).toList();
       for (final doc in docs) {
-        if (doc.syncStatus == DocumentSyncStatus.deleted) {
-          await _syncDeletion(doc);
-        } else if (doc.syncStatus == DocumentSyncStatus.pending || doc.syncStatus == DocumentSyncStatus.failed) {
-          await _syncUpload(doc);
-        }
+        // One document failing in an unexpected way must not stop the rest
+        // of the queue from syncing.
+        try {
+          if (doc.syncStatus == DocumentSyncStatus.deleted) {
+            await _syncDeletion(doc);
+          } else if (doc.syncStatus == DocumentSyncStatus.pending || doc.syncStatus == DocumentSyncStatus.failed) {
+            await _syncUpload(doc);
+          }
+        } catch (_) {}
       }
       await HiveService.settingsBox.put('lastSyncTime', DateTime.now().toIso8601String());
     } finally {
@@ -65,10 +83,14 @@ class SyncService {
   /// the next full pass.
   static Future<void> syncOne(LocalDocument doc) async {
     if (!ConnectivityService.isOnline) return;
-    if (doc.syncStatus == DocumentSyncStatus.deleted) {
-      await _syncDeletion(doc);
-    } else {
-      await _syncUpload(doc);
+    try {
+      if (doc.syncStatus == DocumentSyncStatus.deleted) {
+        await _syncDeletion(doc);
+      } else {
+        await _syncUpload(doc);
+      }
+    } catch (_) {
+      // Left as it is; the next full pass retries it.
     }
     _eventsController.add(null);
   }
@@ -95,15 +117,27 @@ class SyncService {
         filePath: file.path,
         mimeType: doc.mimeType,
         checksum: doc.checksum,
+        filename: doc.filename,
       );
       doc.serverId = remote.id;
       doc.syncStatus = DocumentSyncStatus.synced;
       doc.updatedAt = DateTime.now();
       await doc.save();
-    } on ApiException {
-      // Keep the local file and Hive record exactly as they are -- just
-      // mark it failed so it's retried on the next sync pass instead of
-      // silently disappearing.
+    } catch (e) {
+      if (e is ApiException && e.statusCode == 404 && e.message == 'Asset not found') {
+        // The product this document belongs to no longer exists on the
+        // server (deleted from another phone). There is nowhere to upload
+        // it to and no screen that would show it, so stop retrying. The
+        // exact message is checked so that a wrong server address (which
+        // also answers 404) can never cause local files to be removed.
+        if (await file.exists()) await file.delete();
+        await doc.delete();
+        return;
+      }
+      // Anything else (no network, server error, a file read error): keep
+      // the local file and Hive record exactly as they are and mark it
+      // failed, so it is retried on the next sync pass instead of silently
+      // disappearing or staying stuck on "uploading".
       doc.syncStatus = DocumentSyncStatus.failed;
       doc.updatedAt = DateTime.now();
       await doc.save();
@@ -118,9 +152,14 @@ class SyncService {
     try {
       await DocumentService.delete(doc.serverId!);
       await doc.delete();
-    } on ApiException {
-      // Leave it marked deleted (already hidden from the UI list) and
-      // retry the server-side delete on the next pass.
+    } on ApiException catch (e) {
+      // Already gone on the server: the delete has effectively happened.
+      if (e.statusCode == 404) {
+        await doc.delete();
+        return;
+      }
+      // Otherwise leave it marked deleted (already hidden from the UI list)
+      // and retry the server-side delete on the next pass.
     }
   }
 }

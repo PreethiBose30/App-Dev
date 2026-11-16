@@ -33,6 +33,11 @@ class AssetRepository {
     }
   }
 
+  /// The last list this phone saw, straight from local storage with no
+  /// network call. Lets a screen show something immediately while the
+  /// real fetch is still on its way (or the server is waking up).
+  static List<Product> cachedAssets() => _readCache();
+
   static Future<Product> createAsset(Product product) async {
     final saved = await AssetService.createAsset(product);
     await _upsertCache([saved]);
@@ -91,6 +96,9 @@ class AssetRepository {
             (a.modelNumber?.toLowerCase().contains(term) ?? false),
       );
     }
-    return items.map((a) => a.toProduct()).toList();
+    // Newest first, like the server's list. Mongo ids start with their
+    // creation time, so sorting by id is sorting by age.
+    final sorted = items.toList()..sort((a, b) => b.id.compareTo(a.id));
+    return sorted.map((a) => a.toProduct()).toList();
   }
 }

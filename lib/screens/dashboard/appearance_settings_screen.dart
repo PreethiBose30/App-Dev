@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/swiss.dart';
 import '../../theme/theme_controller.dart';
 
 /// Theme mode (light / dark / system), persisted via ThemeController (Hive
@@ -17,12 +18,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: AppColors.background,
-            elevation: 0,
-            iconTheme: IconThemeData(color: AppColors.textPrimary),
-            title: Text('Appearance', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
-          ),
+          appBar: swissAppBar(context, 'Appearance'),
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 35),

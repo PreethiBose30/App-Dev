@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
   List<Product> _products = [];
   DashboardStats? _stats;
   bool _isLoading = true;
+  bool _isRefreshing = false;
   String? _errorMessage;
   final _searchController = TextEditingController();
 
@@ -46,7 +47,12 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
 
   Future<void> loadProducts() async {
     setState(() {
-      _isLoading = true;
+      // Show what this phone already has while the server answers (it can
+      // take a minute to wake up); the spinner is only for a first load
+      // with nothing saved yet.
+      if (_products.isEmpty) _products = AssetRepository.cachedAssets();
+      _isLoading = _products.isEmpty;
+      _isRefreshing = true;
       _errorMessage = null;
     });
 
@@ -73,12 +79,14 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
         _products = products;
         _stats = stats;
         _isLoading = false;
+        _isRefreshing = false;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
         _errorMessage = e.message;
         _isLoading = false;
+        _isRefreshing = false;
       });
     }
   }
@@ -95,25 +103,29 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
 
   /// Server stats when we have them, otherwise the same numbers computed
   /// from the (offline-cached) product list: expiring = within 30 days.
-  ({int total, double value, int expiring, int expired}) get _summary {
-    final s = _stats;
-    if (s != null) {
-      return (total: s.totalProducts, value: s.totalValue, expiring: s.expiringSoon, expired: s.expired);
-    }
+  /// "Covered" always comes from the list (the server does not report it):
+  /// products whose warranty is still running. A product with no warranty
+  /// recorded is neither covered nor expired.
+  ({int total, double value, int covered, int expiring, int expired}) get _summary {
     final now = DateTime.now();
     final soon = now.add(const Duration(days: 30));
-    var value = 0.0, expiring = 0, expired = 0;
+    var value = 0.0, covered = 0, expiring = 0, expired = 0;
     for (final p in _products) {
       value += p.price ?? 0;
       final e = p.warrantyExpiry;
       if (e == null) continue;
       if (e.isBefore(now)) {
         expired++;
-      } else if (e.isBefore(soon)) {
-        expiring++;
+      } else {
+        covered++;
+        if (e.isBefore(soon)) expiring++;
       }
     }
-    return (total: _products.length, value: value, expiring: expiring, expired: expired);
+    final s = _stats;
+    if (s != null) {
+      return (total: s.totalProducts, value: s.totalValue, covered: covered, expiring: s.expiringSoon, expired: s.expired);
+    }
+    return (total: _products.length, value: value, covered: covered, expiring: expiring, expired: expired);
   }
 
   @override
@@ -199,8 +211,8 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
     );
   }
 
-  Widget _statRow(({int total, double value, int expiring, int expired}) s) {
-    final covered = (s.total - s.expired).clamp(0, s.total);
+  Widget _statRow(({int total, double value, int covered, int expiring, int expired}) s) {
+    final covered = s.covered;
     Widget cell(String value, String label, {bool alert = false, bool first = false}) {
       return Expanded(
         child: Container(
@@ -283,6 +295,10 @@ class _HomeScreenState extends State<HomeScreen> with ThemeAwareState {
       child: Row(
         children: [
           Text('Recent', style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w800)),
+          if (_isRefreshing && !_isLoading) ...[
+            const SizedBox(width: 10),
+            SizedBox(height: 11, width: 11, child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.textSecondary)),
+          ],
           const Spacer(),
           GestureDetector(
             onTap: () async {

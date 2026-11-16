@@ -29,6 +29,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> with Them
       final doc = await picker();
       if (doc == null) return; // user cancelled
       await DocumentPicker.validate(doc);
+      if (!mounted) return;
       setState(() => _picked = doc);
     } on DocumentPickException catch (e) {
       if (!mounted) return;

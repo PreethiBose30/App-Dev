@@ -33,16 +33,27 @@ class Product {
     this.reminderEnabled = false,
   });
 
-  static DateTime? _parseDate(dynamic value) {
+  /// Purchase, warranty and service dates are calendar dates, not moments
+  /// in time. They travel as UTC midnight of that date ("2026-05-01T00:00Z")
+  /// so the server's month arithmetic for the warranty expiry works on the
+  /// date the user picked, whatever time zone the phone is in. Read back,
+  /// a UTC-midnight value is that calendar date; anything else is a value
+  /// saved by an older build (which sent the local-midnight instant) and is
+  /// converted the way that build expected.
+  static DateTime? parseDate(dynamic value) {
     if (value == null) return null;
-    // The backend always returns UTC ISO strings (Mongoose Date -> JSON).
-    // Converting to local here -- once, at the parse boundary -- means
-    // every screen that reads .day/.month/.year sees the calendar date the
-    // user actually picked, instead of it shifting by a day near midnight
-    // for anyone east/west of UTC. Comparisons (isAfter/isBefore/difference)
-    // are unaffected either way since those operate on the absolute instant.
-    return DateTime.tryParse(value.toString())?.toLocal();
+    final parsed = DateTime.tryParse(value.toString());
+    if (parsed == null) return null;
+    final isUtcMidnight = parsed.isUtc &&
+        parsed.hour == 0 &&
+        parsed.minute == 0 &&
+        parsed.second == 0 &&
+        parsed.millisecond == 0;
+    if (isUtcMidnight) return DateTime(parsed.year, parsed.month, parsed.day);
+    return parsed.toLocal();
   }
+
+  static String _dateOnly(DateTime d) => DateTime.utc(d.year, d.month, d.day).toIso8601String();
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
@@ -52,36 +63,36 @@ class Product {
       brand: json['brand'] as String?,
       modelNumber: json['modelNumber'] as String?,
       price: (json['price'] as num?)?.toDouble(),
-      purchaseDate: _parseDate(json['purchaseDate']),
+      purchaseDate: parseDate(json['purchaseDate']),
       warrantyDuration: (json['warrantyDurationMonths'] as num?)?.toInt(),
-      warrantyExpiry: _parseDate(json['warrantyExpiry']),
-      emiDueDate: _parseDate(json['emiDueDate']),
-      serviceDate: _parseDate(json['serviceDate']),
+      warrantyExpiry: parseDate(json['warrantyExpiry']),
+      emiDueDate: parseDate(json['emiDueDate']),
+      serviceDate: parseDate(json['serviceDate']),
       notes: json['notes'] as String?,
       reminderEnabled: json['reminderEnabled'] as bool? ?? false,
     );
   }
 
-  // Fields the create/update API accepts. warrantyExpiry is server-computed
-  // and intentionally not sent.
-  Map<String, dynamic> toRequestBody() {
-    return {
+  /// Fields the create/update API accepts. warrantyExpiry is server-computed
+  /// and intentionally not sent.
+  ///
+  /// With [forUpdate], optional fields that are empty are sent as explicit
+  /// nulls, which the server reads as "remove this value" -- otherwise
+  /// blanking a field on the edit form would silently keep the old value.
+  Map<String, dynamic> toRequestBody({bool forUpdate = false}) {
+    final body = <String, dynamic>{
       'name': name,
       'category': category,
-      if (brand != null) 'brand': brand,
-      if (modelNumber != null) 'modelNumber': modelNumber,
-      if (price != null) 'price': price,
-      // .toUtc() first: a bare local-time ISO string (no 'Z'/offset) is
-      // ambiguous and, per the JS Date spec, gets reinterpreted as the
-      // *server's* local time zone when it lands in Node -- fine when
-      // client and server share a time zone (as in local dev), wrong by
-      // the zone offset otherwise. Sending an explicit UTC instant removes
-      // the ambiguity; _parseDate's .toLocal() on the way back undoes it.
-      if (purchaseDate != null) 'purchaseDate': purchaseDate!.toUtc().toIso8601String(),
-      if (warrantyDuration != null) 'warrantyDurationMonths': warrantyDuration,
-      if (serviceDate != null) 'serviceDate': serviceDate!.toUtc().toIso8601String(),
-      if (notes != null) 'notes': notes,
+      'brand': brand,
+      'modelNumber': modelNumber,
+      'price': price,
+      'purchaseDate': purchaseDate == null ? null : _dateOnly(purchaseDate!),
+      'warrantyDurationMonths': warrantyDuration,
+      'serviceDate': serviceDate == null ? null : _dateOnly(serviceDate!),
+      'notes': notes,
       'reminderEnabled': reminderEnabled,
     };
+    if (!forUpdate) body.removeWhere((key, value) => value == null);
+    return body;
   }
 }

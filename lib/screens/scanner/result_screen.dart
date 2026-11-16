@@ -1,15 +1,47 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/swiss.dart';
+import 'dart:io';
+import '../../services/document_picker.dart';
 import '../dashboard/add_product_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final String extractedText;
 
+  /// The photo that was scanned. Passed on to the new-product form as its
+  /// invoice, so the bill itself is kept and not just the text read off it.
+  final String? imagePath;
+
   const ResultScreen({
     super.key,
     required this.extractedText,
+    this.imagePath,
   });
+
+  Future<void> _useForNewProduct(BuildContext context) async {
+    PickedDocument? invoice;
+    final path = imagePath;
+    if (path != null) {
+      final candidate = PickedDocument(file: File(path), mimeType: DocumentPicker.mimeTypeForPath(path));
+      try {
+        await DocumentPicker.validate(candidate);
+        invoice = candidate;
+      } catch (_) {
+        // Too large or unreadable: carry on with the text only.
+      }
+    }
+    if (!context.mounted) return;
+    final saved = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddProductScreen(
+          initialNotes: extractedText.isEmpty ? null : extractedText,
+          initialInvoice: invoice,
+        ),
+      ),
+    );
+    if (saved == true && context.mounted) Navigator.pop(context, true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,13 +68,12 @@ class ResultScreen extends StatelessWidget {
               if (extractedText.isNotEmpty) ...[
                 SwissButton(
                   'Use as notes for a new product',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AddProductScreen(initialNotes: extractedText)),
-                    );
-                  },
+                  onPressed: () => _useForNewProduct(context),
                 ),
+                const SizedBox(height: 12),
+              ],
+              if (extractedText.isEmpty && imagePath != null) ...[
+                SwissButton('Add a product with this photo', onPressed: () => _useForNewProduct(context)),
                 const SizedBox(height: 12),
               ],
               SwissButton('Done', outlined: true, onPressed: () => Navigator.pop(context)),

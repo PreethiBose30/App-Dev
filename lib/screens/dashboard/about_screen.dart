@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/swiss.dart';
 
 /// About the app, its makers and RoboVITics (the club behind it).
 class AboutScreen extends StatefulWidget {
@@ -32,15 +33,10 @@ class _AboutScreenState extends State<AboutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
-        title: Text('About', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
-      ),
+      appBar: swissAppBar(context, 'About'),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
           children: [
             // The app.
             Row(

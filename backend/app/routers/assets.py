@@ -89,11 +89,21 @@ async def update_asset(asset_id: str, body: AssetBody, user: CurrentUser = Depen
     asset = await load_owned("assets", to_object_id(asset_id), user, "Asset not found")
 
     updates = body.to_update_dict()
+    if "name" in updates and not updates["name"].strip():
+        raise HTTPException(status_code=422, detail="Name is required")
     asset.update(updates)
+    # An explicit null means "remove this value" (e.g. the warranty length
+    # was blanked out on the edit form); a field left out stays as it is.
+    cleared = body.cleared_fields()
+    for field in cleared:
+        asset.pop(field, None)
     asset["updatedAt"] = datetime.now(timezone.utc)
     _compute_warranty_expiry(asset)
 
-    await database.db.assets.update_one({"_id": asset["_id"]}, {"$set": asset})
+    change: dict = {"$set": {k: v for k, v in asset.items() if k != "_id"}}
+    if cleared:
+        change["$unset"] = {field: "" for field in cleared}
+    await database.db.assets.update_one({"_id": asset["_id"]}, change)
     return {"message": "Asset updated", "asset": serialize_asset(asset)}
 
 

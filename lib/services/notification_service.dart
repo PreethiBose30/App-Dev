@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/product.dart';
+import '../utils/format.dart';
 import 'hive_service.dart';
 
 /// Schedules/cancels the on-device "warranty expiring soon" reminder for
@@ -138,7 +139,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       id,
       'Warranty expiring soon',
-      '${product.name} warranty expires on ${_formatDate(expiry)}.',
+      '${product.name} warranty expires on ${dayMonthYear(expiry)}.',
       tz.TZDateTime.from(fireDate, tz.UTC),
       const NotificationDetails(
         android: AndroidNotificationDetails(
@@ -194,6 +195,4 @@ class NotificationService {
       if (!liveIds.contains(pending.id)) await _plugin.cancel(pending.id);
     }
   }
-
-  static String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
 }

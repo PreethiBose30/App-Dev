@@ -165,6 +165,7 @@ class ApiClient {
     required String fieldName,
     Map<String, String>? fields,
     String? contentType,
+    String? filename,
   }) async {
     try {
       final request = http.MultipartRequest('POST', _uri(path));
@@ -175,6 +176,10 @@ class ApiClient {
         await http.MultipartFile.fromPath(
           fieldName,
           filePath,
+          // The name the server stores and other phones show. Without it
+          // the name of the file on disk is sent, which for documents is
+          // an internal random id rather than "Invoice.png".
+          filename: filename,
           // Without this, MultipartFile.fromPath defaults to
           // application/octet-stream, which the backend's upload
           // validation always rejects -- every document upload failed

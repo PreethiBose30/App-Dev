@@ -167,7 +167,7 @@ class SwissButton extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
                 foregroundColor: fg,
-                disabledBackgroundColor: AppColors.accent.withOpacity(0.5),
+                disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.5),
                 disabledForegroundColor: fg,
                 minimumSize: size,
                 shape: shape,
